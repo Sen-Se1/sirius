@@ -1,0 +1,87 @@
+[
+  {
+    "id": "backlog",
+    "title": "Backlog",
+    "color": "bg-gray-100",
+    "position": 0,
+    "boardId": "board-1",
+    "cards": [
+      {
+        "id": "1",
+        "title": "Implémenter l'authentification",
+        "description": "Mettre en place l'authentification avec JWT",
+        "priority": "high",
+        "attachments": 2,
+        "comments": 3,
+        "dueDate": "2025-03-06",
+        "listId": "backlog"
+      },
+      {
+        "id": "2",
+        "title": "Implémenter l'authentification",
+        "description": "Mettre en place l'authentification avec JWT",
+        "priority": "high",
+        "attachments": 2,
+        "comments": 3,
+        "dueDate": "2025-03-06",
+        "listId": "backlog"
+      },
+      {
+        "id": "3",
+        "title": "Implémenter l'authentification",
+        "description": "Mettre en place l'authentification avec JWT",
+        "priority": "high",
+        "attachments": 2,
+        "comments": 3,
+        "dueDate": "2025-03-06",
+        "listId": "backlog"
+      },
+      {
+        "id": "4",
+        "title": "Implémenter l'authentification",
+        "description": "Mettre en place l'authentification avec JWT",
+        "priority": "high",
+        "attachments": 2,
+        "comments": 3,
+        "dueDate": "2025-03-06",
+        "listId": "backlog"
+      },
+      {
+        "id": "5",
+        "title": "Implémenter l'authentification",
+        "description": "Mettre en place l'authentification avec JWT",
+        "priority": "high",
+        "attachments": 2,
+        "comments": 3,
+        "dueDate": "2025-03-06",
+        "listId": "backlog"
+      },
+      {
+        "id": "6",
+        "title": "Implémenter l'authentification",
+        "description": "Mettre en place l'authentification avec JWT",
+        "priority": "high",
+        "attachments": 2,
+        "comments": 3,
+        "dueDate": "2025-03-06",
+        "listId": "backlog"
+      }
+    ]
+  },
+  {
+    "id": "in-progress",
+    "title": "En cours",
+    "color": "bg-yellow-50",
+    "position": 1,
+    "boardId": "board-1",
+    "cards": []
+  },
+  {
+    "id": "done",
+    "title": "Terminé",
+    "color": "bg-green-50",
+    "position": 2,
+    "boardId": "board-1",
+    "cards": []
+  }
+]

@@ -1,0 +1,76 @@
+{
+  "plans": [
+    {
+      "id": "free",
+      "name": "Free",
+      "price": 0,
+      "description": "Perfect for small teams and individuals",
+      "features": [
+        "Up to 5 team members",
+        "2 workspaces",
+        "Basic task management",
+        "Real-time collaboration",
+        "5GB storage"
+      ],
+      "maxUsers": 5,
+      "maxWorkspaces": 2,
+      "maxStorage": 5
+    },
+    {
+      "id": "standard",
+      "name": "Standard",
+      "price": 8,
+      "description": "Ideal for small teams",
+      "features": [
+        "Up to 10 team members",
+        "5 workspaces",
+        "Basic task management",
+        "Custom fields",
+        "Email support",
+        "10GB storage",
+        "Basic analytics"
+      ],
+      "maxUsers": 10,
+      "maxWorkspaces": 5,
+      "maxStorage": 10
+    },
+    
+    {
+      "id": "pro",
+      "name": "Professional",
+      "price": 12,
+      "description": "Ideal for growing teams",
+      "features": [
+        "Up to 50 team members",
+        "Unlimited workspaces",
+        "Advanced task management",
+        "Custom fields",
+        "Priority support",
+        "50GB storage",
+        "Advanced analytics"
+      ],
+      "maxUsers": 50,
+      "maxWorkspaces": -1,
+      "maxStorage": 50
+    },
+    {
+      "id": "enterprise",
+      "name": "Enterprise",
+      "price": 29,
+      "description": "For large organizations",
+      "features": [
+        "Unlimited team members",
+        "Unlimited workspaces",
+        "Enterprise-grade security",
+        "Custom integrations",
+        "Dedicated support",
+        "Unlimited storage",
+        "Advanced permissions",
+        "Audit logs"
+      ],
+      "maxUsers": -1,
+      "maxWorkspaces": -1,
+      "maxStorage": -1
+    }
+  ]
+}
