@@ -57,22 +57,6 @@ export const convertCurrency = async (
   }
 };
 
-
-
-export const getInitials= (name: string) => {
-  const nameParts = name.trim().split(" ");
-  if (nameParts.length === 1) {
-    return nameParts[0].charAt(0).toUpperCase();
-  } else if (nameParts.length >= 2) {
-    return (
-      nameParts[0].charAt(0).toUpperCase() + nameParts[1].charAt(0).toUpperCase()
-    );
-  }
-  return "";
-};
-
-
-
 export const computeAverageColor = (url: string): Promise<string> => {
   return new Promise((resolve, reject) => {
     const img = new Image();

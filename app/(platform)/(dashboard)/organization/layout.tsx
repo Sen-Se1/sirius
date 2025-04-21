@@ -12,7 +12,7 @@ const OrganizationLayout = ({ children }: { children: React.ReactNode }) => {
     <main className="pt-[64px] px-4 max-w-6xl 2xl:max-w-screen-xl h-full">
       <div className="flex gap-x-1 h-full">
         {isSidebarOpen ? (
-          <div className="w-64 shrink-0 md:block hidden px-2 pt-12 border-r-4 border-neutral-200 dark:border-neutral-700 relative h-full">
+          <div className="w-64 shrink-0 md:block hidden px-2 pt-12 border-r-4 bg-white border-neutral-200 dark:border-neutral-700 relative h-full">
             <Button
               variant="ghost"
               onClick={() => setIsSidebarOpen(false)}
@@ -33,7 +33,7 @@ const OrganizationLayout = ({ children }: { children: React.ReactNode }) => {
             <ChevronRight className="h-6 w-6" />
           </Button>
         )}
-        <div className="flex-1 h-full w-full p-2 bg-gray-50">
+        <div className="flex-1 h-full p-2">
           {children}
         </div>
       </div>

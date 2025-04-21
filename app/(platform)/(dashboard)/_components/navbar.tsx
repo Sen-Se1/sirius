@@ -2,7 +2,7 @@
 
 import { Plus } from "lucide-react";
 import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
-
+import { usePathname } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 
@@ -13,16 +13,20 @@ import { toast } from "sonner";
 import NavbarSearch from "./nav-search";
 import Notifications from "./notifications";
 import { Notification } from "@/types";
+import { computeAverageColor, getLuminance } from "@/lib/helper";
 
 export const Navbar = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [board, setBoard] = useState<any>(null);
+  const [bgColor, setBgColor] = useState<string>("white");
+  const [textColor, setTextColor] = useState<string>("black");
+  const pathname = usePathname();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-
         const dummyNotifications: Notification[] = [
           { id: "1", message: "Notification 1", isRead: false },
           { id: "2", message: "Notification 2", isRead: false },
@@ -36,12 +40,52 @@ export const Navbar = () => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
-  
+
+  useEffect(() => {
+    const boardId = pathname.startsWith("/board/") ? pathname.split("/")[2] : null;
+    if (boardId) {
+      fetch(`/api/boards/${boardId}`)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error("Failed to fetch board");
+          }
+          return res.json();
+        })
+        .then((data) => setBoard(data))
+        .catch((err) => {
+          console.error(err);
+          setBoard(null);
+        });
+    } else {
+      setBoard(null);
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    if (board && board.imageFullUrl) {
+      computeAverageColor(board.imageFullUrl)
+        .then((color) => {
+          setBgColor(color);
+          const luminance = getLuminance(color);
+          setTextColor(luminance > 0.5 ? "black" : "white");
+        })
+        .catch((err) => {
+          console.error("Failed to compute average color:", err);
+          setBgColor("white");
+          setTextColor("black");
+        });
+    } else {
+      setBgColor("white");
+      setTextColor("black");
+    }
+  }, [board]);
+
   return (
-    <nav className="fixed z-50 top-0 px-4 w-full h-16 border-b shadow-sm bg-white flex items-center left-0  justify-between">
+    <nav 
+      style={{ backgroundColor: bgColor, color: textColor }}
+      className="fixed z-50 top-0 px-4 w-full h-16 border-b shadow-sm bg-white flex items-center left-0  justify-between">
       <MobileSidebar />
       <div className="flex items-center gap-x-4">
         <div className="hidden md:flex">
