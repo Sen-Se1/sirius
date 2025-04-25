@@ -126,6 +126,7 @@ model Favorite {
   board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
 
   @@id([userId, boardId])
+  @@index([boardId])
 }
 
 enum ACTION {

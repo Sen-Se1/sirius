@@ -14,6 +14,7 @@ import NavbarSearch from "./nav-search";
 import Notifications from "./notifications";
 import { Notification } from "@/types";
 import { computeAverageColor, getLuminance } from "@/lib/helper";
+import Favorites from "./favorites-dropdown";
 
 export const Navbar = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -128,6 +129,7 @@ export const Navbar = () => {
           }}
         />
         {/* <ThemeToggle /> */}
+        <Favorites loading={loading} />
         <Notifications notifications={notifications} />
      
         <UserButton
