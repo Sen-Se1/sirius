@@ -19,6 +19,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   memberships Member[]
+  favorites   Favorite[] @relation()
   auditLogs   AuditLog[]
 }
 
@@ -77,7 +78,8 @@ model Board {
   imageUserName String       @db.Text
   imageLinkHTML String       @db.Text
 
-  lists List[]
+  lists     List[]
+  favorited Favorite[] @relation()
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -114,6 +116,16 @@ model Card {
   updatedAt DateTime @updatedAt
 
   @@index([listId])
+}
+
+model Favorite {
+  userId    String
+  boardId   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@id([userId, boardId])
 }
 
 enum ACTION {
