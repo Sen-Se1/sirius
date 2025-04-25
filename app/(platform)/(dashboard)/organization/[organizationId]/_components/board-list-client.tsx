@@ -16,7 +16,7 @@ interface BoardListClientProps {
   isPro: boolean;
 }
 
-const BoardListClient = ({boards, availableCount, isPro}: BoardListClientProps) => {
+const BoardListClient = ({ boards, availableCount, isPro }: BoardListClientProps) => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -110,9 +110,22 @@ const BoardListClient = ({boards, availableCount, isPro}: BoardListClientProps) 
           <FormPopover sideOffset={10} side="right">
             <div
               role="button"
-              className="p-2 bg-muted rounded-sm flex items-center justify-center hover:opacity-75 transition"
+              className="p-2 bg-muted rounded-sm relative flex flex-col gap-y-1 items-center justify-center hover:opacity-75 transition"
             >
               <p className="text-sm">Create new board</p>
+              <span className="text-xs">
+                {isPro
+                  ? "Unlimited"
+                  : `${MAX_FREE_BOARDS - availableCount} remaining`}
+              </span>
+              <Hint
+                sideOffset={40}
+                description={`
+            Free Organizations can have up to 5 open boards. For unlimited boards upgrade this organization.
+          `}
+              >
+                <HelpCircle className="absolute bottom-2 right-2 h-[14px] w-[14px]" />
+              </Hint>
             </div>
           </FormPopover>
         </div>
