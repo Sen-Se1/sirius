@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 datasource db {
   provider     = "mysql"
   url          = env("DATABASE_URL")
@@ -11,49 +8,110 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model User {
+  id        String   @id
+  email     String
+  username  String
+  photo     String   @db.Text
+  firstName String
+  lastName  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships Member[]
+  auditLogs   AuditLog[]
+}
+
+model Organization {
+  id        String   @id
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members          Member[]
+  roles            Role[]
+  boards           Board[]
+  orgLimits        OrgLimit[]
+  orgSubscriptions OrgSubscription[]
+  auditLogs        AuditLog[]
+}
+
+model Role {
+  id           String       @id
+  name         String
+  orgId        String
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  members Member[]
+
+  @@index([orgId])
+}
+
+model Member {
+  id           String       @id @default(uuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orgId        String
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  roleId       String?
+  role         Role?        @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([userId, orgId])
+  @@index([userId])
+  @@index([orgId])
+  @@index([roleId])
+}
+
 model Board {
-  id                  String @id @default(uuid())
-  orgId               String
-  title               String
-  imageId             String
-  imageThumbUrl       String @db.Text
-  imageFullUrl        String @db.Text
-  imageUserName       String @db.Text
-  imageLinkHTML       String @db.Text
+  id            String       @id @default(uuid())
+  orgId         String
+  organization  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  title         String
+  imageId       String
+  imageThumbUrl String       @db.Text
+  imageFullUrl  String       @db.Text
+  imageUserName String       @db.Text
+  imageLinkHTML String       @db.Text
 
-  lists               List[]
+  lists List[]
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orgId])
 }
 
 model List {
-  id                  String @id @default(uuid())
-  title               String
-  order               Int
+  id    String @id @default(uuid())
+  title String
+  order Int
 
-  boardId             String
-  board               Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  boardId String
+  board   Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
 
-  cards               Card[]
+  cards Card[]
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([boardId])
 }
 
 model Card {
-  id                  String @id @default(uuid())
-  title               String
-  description         String? @db.Text
-  order               Int
+  id          String  @id @default(uuid())
+  title       String
+  description String? @db.Text
+  order       Int
 
-  listId              String
-  list                List   @relation(fields: [listId], references: [id], onDelete: Cascade)
+  listId String
+  list   List   @relation(fields: [listId], references: [id], onDelete: Cascade)
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([listId])
 }
@@ -70,36 +128,43 @@ enum ENTITY_TYPE {
   CARD
 }
 
-model AuditLog {
-  id                  String  @id @default(uuid())
-  orgId               String
-  action              ACTION
-  entityId            String
-  entityType          ENTITY_TYPE
-  entityTitle         String
-  userId              String
-  userImage           String @db.Text
-  userName            String @db.Text
-
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime  @updatedAt
-}
-
 model OrgLimit {
-  id                  String @id @default(uuid())
-  orgId               String @unique
-  count               Int @default(0)
+  id           String       @id @default(uuid())
+  orgId        String       @unique
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  count        Int          @default(0)
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model OrgSubscription {
-  id                  String @id @default(uuid())
-  orgId               String @unique
+  id           String       @id @default(uuid())
+  orgId        String       @unique
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
-  stripeCustomerId            String? @unique @map(name: "stripe_customer_id")
-  stripeSubscriptionId        String? @unique @map(name: "stripe_subscription_id")
-  stripePriceId               String? @map(name: "stripe_price_id")
-  stripeCurrentPeriodEnd      DateTime? @map(name: "stripe_current_period_end")
+  stripeCustomerId       String?   @unique @map(name: "stripe_customer_id")
+  stripeSubscriptionId   String?   @unique @map(name: "stripe_subscription_id")
+  stripePriceId          String?   @map(name: "stripe_price_id")
+  stripeCurrentPeriodEnd DateTime? @map(name: "stripe_current_period_end")
+}
+
+model AuditLog {
+  id           String       @id @default(uuid())
+  orgId        String
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  action       ACTION
+  entityId     String
+  entityType   ENTITY_TYPE
+  entityTitle  String
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userImage    String       @db.Text
+  userName     String       @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orgId])
+  @@index([userId])
 }
