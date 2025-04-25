@@ -16,7 +16,11 @@ import { Notification } from "@/types";
 import { computeAverageColor, getLuminance } from "@/lib/helper";
 import Favorites from "./favorites-dropdown";
 
-export const Navbar = () => {
+interface NavbarProps {
+  favorites: (any & { board: { title: string } })[];
+}
+
+export const Navbar = ({ favorites }: NavbarProps) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [board, setBoard] = useState<any>(null);
@@ -129,7 +133,7 @@ export const Navbar = () => {
           }}
         />
         {/* <ThemeToggle /> */}
-        <Favorites loading={loading} />
+        <Favorites favorites={favorites} loading={false} />
         <Notifications notifications={notifications} />
      
         <UserButton
