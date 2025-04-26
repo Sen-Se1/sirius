@@ -27,7 +27,6 @@ interface NotificationsProps {
 }
 
 const Notifications = ({ notifications }: NotificationsProps) => {
-    console.log(notifications)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
