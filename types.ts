@@ -21,9 +21,3 @@ export type EmailPayload = {
   subject: string;
   html: string;
 };
-
-export type Notification = {
-  id: string;
-  message: string;
-  isRead: boolean;
-}

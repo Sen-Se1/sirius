@@ -18,9 +18,13 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships Member[]
-  favorites   Favorite[] @relation()
-  auditLogs   AuditLog[]
+  memberships       Member[]
+  favorites         Favorite[]     @relation()
+  sentMessages      ChatMessage[]  @relation(name: "Sender")
+  receivedMessages  ChatMessage[]  @relation(name: "Recipient")
+  notifications     Notification[] @relation(name: "Recipient")
+  sentNotifications Notification[] @relation(name: "Sender")
+  auditLogs         AuditLog[]
 }
 
 model Organization {
@@ -34,6 +38,7 @@ model Organization {
   boards           Board[]
   orgLimits        OrgLimit[]
   orgSubscriptions OrgSubscription[]
+  notifications    Notification[]
   auditLogs        AuditLog[]
 }
 
@@ -104,17 +109,20 @@ model List {
 }
 
 model Card {
-  id          String  @id @default(uuid())
+  id          String    @id @default(uuid())
   title       String
-  description String? @db.Text
+  description String?   @db.Text
+  dueDate     DateTime?
   order       Int
 
   listId String
   list   List   @relation(fields: [listId], references: [id], onDelete: Cascade)
 
+  notifications Notification[] @relation("CardNotifications")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
+  
   @@index([listId])
 }
 
@@ -127,13 +135,6 @@ model Favorite {
 
   @@id([userId, boardId])
   @@index([boardId])
-}
-
-model Notification {
-  id        String   @id @default(uuid())
-  userId    String
-  boardId   String
-  createdAt DateTime @default(now())
 }
 
 enum ACTION {
@@ -187,4 +188,37 @@ model AuditLog {
 
   @@index([orgId])
   @@index([userId])
+}
+
+model Notification {
+  id           String        @id @default(uuid())
+  userId       String
+  user         User          @relation(name: "Recipient", fields: [userId], references: [id], onDelete: Cascade)
+  senderId     String?
+  sender       User?         @relation(name: "Sender", fields: [senderId], references: [id], onDelete: SetNull)
+  orgId        String?
+  organization Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  message      String        @db.Text
+  isRead       Boolean       @default(false)
+  cardId       String?
+  card         Card?         @relation(name: "CardNotifications", fields: [cardId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  @@index([userId])
+  @@index([senderId])
+  @@index([orgId])
+  @@index([cardId])
+}
+
+model ChatMessage {
+  id          String   @id @default(uuid())
+  senderId    String
+  sender      User     @relation(name: "Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipientId String
+  recipient   User     @relation(name: "Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  content     String   @db.Text
+  createdAt   DateTime @default(now())
+  @@index([senderId])
+  @@index([recipientId])
 }

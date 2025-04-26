@@ -11,6 +11,7 @@ import { createCard } from "@/actions/create-card";
 import { Button } from "@/components/ui/button";
 import { FormSubmit } from "@/components/form/form-submit";
 import { FormTextarea } from "@/components/form/form-textarea";
+import { FormInput } from "@/components/form/form-input";
 
 interface CardFormProps {
   listId: string;
@@ -54,10 +55,11 @@ export const CardForm = forwardRef<HTMLTextAreaElement, CardFormProps>(
 
     const onSubmit = (formData: FormData) => {
       const title = formData.get("title") as string;
+      const dueDate = formData.get("dueDate") as string | null;
       const listId = formData.get("listId") as string;
       const boardId = params.boardId as string;
 
-      execute({ title, listId, boardId });
+      execute({ title, dueDate: dueDate || undefined, listId, boardId });
     };
 
     if (isEditing) {
@@ -72,6 +74,12 @@ export const CardForm = forwardRef<HTMLTextAreaElement, CardFormProps>(
             onKeyDown={onTextareakeyDown}
             ref={ref}
             placeholder="Enter a title for this card..."
+            errors={fieldErrors}
+          />
+          <FormInput
+            id="dueDate"
+            type="date"
+            placeholder="Select due date (optional)"
             errors={fieldErrors}
           />
           <input hidden id="listId" name="listId" value={listId} readOnly />
