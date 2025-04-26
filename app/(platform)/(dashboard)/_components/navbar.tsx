@@ -13,7 +13,12 @@ import Favorites from "./favorites-dropdown";
 import { Notification } from "@prisma/client";
 
 interface NavbarProps {
-  favorites: { userId: string; boardId: string; createdAt: Date; board: { title: string } }[];
+  favorites: {
+    userId: string;
+    boardId: string;
+    createdAt: Date;
+    board: { title: string };
+  }[];
   notifications: Notification[];
 }
 
@@ -24,7 +29,9 @@ export const Navbar = ({ favorites, notifications }: NavbarProps) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    const boardId = pathname.startsWith("/board/") ? pathname.split("/")[2] : null;
+    const boardId = pathname.startsWith("/board/")
+      ? pathname.split("/")[2]
+      : null;
     if (boardId) {
       fetch(`/api/boards/${boardId}`)
         .then((res) => {
@@ -63,18 +70,19 @@ export const Navbar = ({ favorites, notifications }: NavbarProps) => {
   }, [board]);
 
   return (
-    <nav 
+    <nav
       style={{ backgroundColor: bgColor, color: textColor }}
-      className="fixed z-50 top-0 px-4 w-full h-16 border-b shadow-sm bg-white flex items-center left-0  justify-between">
+      className="fixed z-50 top-0 px-4 w-full h-16 border-b shadow-sm bg-white flex items-center left-0  justify-between"
+    >
       <MobileSidebar />
       <div className="flex items-center gap-x-4">
         <div className="hidden md:flex">
           <Logo />
         </div>
       </div>
-      <div className="ml-auto flex items-center gap-x-2">
-      <NavbarSearch />
-      <OrganizationSwitcher
+      <div className="ml-auto flex items-center gap-x-6">
+        <NavbarSearch />
+        <OrganizationSwitcher
           hidePersonal
           afterCreateOrganizationUrl="/organization/:id"
           afterLeaveOrganizationUrl="/select-org"

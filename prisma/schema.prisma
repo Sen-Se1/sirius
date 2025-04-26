@@ -24,6 +24,7 @@ model User {
   receivedMessages  ChatMessage[]  @relation(name: "Recipient")
   notifications     Notification[] @relation(name: "Recipient")
   sentNotifications Notification[] @relation(name: "Sender")
+  Invitation        Invitation[]   @relation(name: "Inviter")
   auditLogs         AuditLog[]
 }
 
@@ -39,7 +40,27 @@ model Organization {
   orgLimits        OrgLimit[]
   orgSubscriptions OrgSubscription[]
   notifications    Notification[]
+  Invitation       Invitation[]
   auditLogs        AuditLog[]
+}
+
+model Invitation {
+  id             String       @id @default(uuid())
+  inviterId      String
+  inviter        User         @relation(name: "Inviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  inviteeEmail   String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  roleId         String?
+  role           Role?        @relation(fields: [roleId], references: [id], onDelete: SetNull) // Relationship to Role
+  status         String       @default("pending")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([inviterId])
+  @@index([organizationId])
+  @@index([inviteeEmail])
+  @@index([roleId]) // Index for the new roleId field
 }
 
 model Role {
@@ -50,7 +71,8 @@ model Role {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  members Member[]
+  members     Member[]
+  invitations Invitation[]
 
   @@index([orgId])
 }
@@ -122,7 +144,7 @@ model Card {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([listId])
 }
 
@@ -203,8 +225,9 @@ model Notification {
   cardId       String?
   card         Card?         @relation(name: "CardNotifications", fields: [cardId], references: [id], onDelete: Cascade)
 
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([userId])
   @@index([senderId])
   @@index([orgId])
@@ -219,6 +242,7 @@ model ChatMessage {
   recipient   User     @relation(name: "Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
   content     String   @db.Text
   createdAt   DateTime @default(now())
+
   @@index([senderId])
   @@index([recipientId])
 }

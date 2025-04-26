@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkCardDeadlines } from "@/actions/check-card-deadlines";
 
-export async function GET(req: NextRequest) {
-  // const secret = req.headers.get("x-vercel-cron-secret");
-  // if (secret !== process.env.CRON_SECRET) {
-  //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  // }
+export async function POST(req: NextRequest) {
+  const secret = req.headers.get("x-vercel-cron-secret");
+  if (secret !== process.env.CRON_SECRET) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   try {
     const result = await checkCardDeadlines({});
