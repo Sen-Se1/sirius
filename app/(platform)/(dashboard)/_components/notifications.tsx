@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import { Bell } from "lucide-react";
+import { Bell, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,24 +10,43 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
-
-interface Notification {
-  id: string;
-  userId: string;
-  senderId?: string;
-  orgId?: string;
-  message: string;
-  isRead: boolean;
-  cardId?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { useEffect, useState } from "react";
+import { getBoardIdFromCard } from "@/actions/get-board-id-from-card";
+import { Notification } from "@prisma/client";
+import { toast } from "sonner";
 
 interface NotificationsProps {
   notifications: Notification[];
 }
 
 const Notifications = ({ notifications }: NotificationsProps) => {
+  const [boardIdMap, setBoardIdMap] = useState<{ [cardId: string]: string }>(
+    {}
+  );
+
+  useEffect(() => {
+    const fetchBoardIds = async () => {
+      const cardNotifications = notifications.filter((n) => n.cardId);
+      const newBoardIdMap: { [cardId: string]: string } = {};
+
+      for (const notification of cardNotifications) {
+        if (notification.cardId && !boardIdMap[notification.cardId]) {
+          const result = await getBoardIdFromCard({
+            cardId: notification.cardId,
+          });
+          if (result.data && result.data.boardId) {
+            newBoardIdMap[notification.cardId] = result.data.boardId;
+          } else {
+            toast.error("Failed to load board for notification");
+          }
+        }
+      }
+      setBoardIdMap((prev) => ({ ...prev, ...newBoardIdMap }));
+    };
+
+    fetchBoardIds();
+  }, [notifications]);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -44,7 +64,7 @@ const Notifications = ({ notifications }: NotificationsProps) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-64 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 p-1"
+        className="w-96 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 p-1"
       >
         {notifications.length > 0 ? (
           notifications.map((notification) => (
@@ -57,21 +77,36 @@ const Notifications = ({ notifications }: NotificationsProps) => {
                   : "text-gray-900 dark:text-gray-100"
               } rounded-md focus:outline-none cursor-pointer transition-colors`}
             >
-              {notification.cardId ? (
-                <Link
-                  href={`/board/${notification.cardId}`}
-                  className="block w-full h-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700"
-                >
-                  <span className="truncate">{notification.message}</span>
-                </Link>
-              ) : (
-                <Link
-                  href={`/chat/${notification.senderId || ''}`}
-                  className="block w-full h-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700"
-                >
-                  <span className="truncate">{notification.message}</span>
-                </Link>
-              )}
+              <div>
+                {notification.cardId ? (
+                  <Link
+                    href={`/board/${
+                      boardIdMap[notification.cardId] || notification.cardId
+                    }`}
+                    className="block w-full h-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700"
+                  >
+                    <span className="truncate">{notification.message}</span>
+                  </Link>
+                ) : (
+                  <Link
+                    href={`/chat/${notification.senderId || ""}`}
+                    className="block w-full h-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700"
+                  >
+                    <span className="truncate">{notification.message}</span>
+                  </Link>
+                )}
+                {!notification.isRead && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="ml-2 h-6 w-6"
+                    //   onClick={() => handleMarkAsRead(notification.id)}
+                    aria-label="Mark as read"
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </DropdownMenuItem>
           ))
         ) : (

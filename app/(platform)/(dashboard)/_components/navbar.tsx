@@ -10,20 +10,11 @@ import NavbarSearch from "./nav-search";
 import Notifications from "./notifications";
 import { computeAverageColor, getLuminance } from "@/lib/helper";
 import Favorites from "./favorites-dropdown";
+import { Notification } from "@prisma/client";
 
 interface NavbarProps {
   favorites: { userId: string; boardId: string; createdAt: Date; board: { title: string } }[];
-  notifications: {
-    id: string;
-    userId: string;
-    senderId?: string;
-    orgId?: string;
-    message: string;
-    isRead: boolean;
-    cardId?: string;
-    createdAt: Date;
-    updatedAt: Date;
-  }[];
+  notifications: Notification[];
 }
 
 export const Navbar = ({ favorites, notifications }: NavbarProps) => {

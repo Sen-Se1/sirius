@@ -3,15 +3,8 @@
 import { auth } from "@clerk/nextjs";
 import { db } from "@/lib/db";
 import { createSafeAction } from "@/lib/create-safe-action";
-import { z } from "zod";
-
-const GetNotificationsSchema = z.object({});
-
-type InputType = z.infer<typeof GetNotificationsSchema>;
-type ReturnType = {
-  data?: { notifications: any[] };
-  error?: string;
-};
+import { GetNotificationsSchema } from "./schema";
+import { InputType, ReturnType } from "./types";
 
 const handler = async (data: InputType): Promise<ReturnType> => {
   const { userId } = auth();

@@ -1,11 +1,17 @@
-import { NextResponse, NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { checkCardDeadlines } from "@/actions/check-card-deadlines";
 
-export async function GET(req: NextRequest, res: NextResponse) {
-  // if (req.headers.get("x-vercel-cron-secret") !== process.env.CRON_SECRET) {
+export async function GET(req: NextRequest) {
+  // const secret = req.headers.get("x-vercel-cron-secret");
+  // if (secret !== process.env.CRON_SECRET) {
   //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   // }
 
-  const result = await checkCardDeadlines({});
-  return NextResponse.json(result, { status: 200 });
+  try {
+    const result = await checkCardDeadlines({});
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    console.error("Cron job error:", error);
+    return NextResponse.json({ error: "Failed to check card deadlines" }, { status: 500 });
+  }
 }
