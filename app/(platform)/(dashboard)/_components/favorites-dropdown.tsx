@@ -25,12 +25,12 @@ export const Favorites = ({ favorites, loading }: FavoritesProps) => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
+          variant="custom_ghost"
           size="icon"
-          className="relative h-8 w-8 rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+          className="relative h-8 w-8 rounded-full"
           aria-label="Favorite boards"
         >
-          <Star className="h-5 w-5 text-gray-900 dark:text-gray-100" />
+          <Star className="h-5 w-5 text-current" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent

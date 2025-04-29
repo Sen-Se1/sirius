@@ -52,7 +52,7 @@ model Invitation {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   roleId         String?
-  role           Role?        @relation(fields: [roleId], references: [id], onDelete: SetNull) // Relationship to Role
+  role           Role?        @relation(fields: [roleId], references: [id], onDelete: SetNull)
   status         String       @default("pending")
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -60,7 +60,7 @@ model Invitation {
   @@index([inviterId])
   @@index([organizationId])
   @@index([inviteeEmail])
-  @@index([roleId]) // Index for the new roleId field
+  @@index([roleId])
 }
 
 model Role {
@@ -241,6 +241,7 @@ model ChatMessage {
   recipientId String
   recipient   User     @relation(name: "Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
   content     String   @db.Text
+  isRead      Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   @@index([senderId])

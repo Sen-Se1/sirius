@@ -16,7 +16,6 @@ const handler = async (data: InputType): Promise<ReturnType> => {
   const { recipientId, content } = data;
 
   try {
-    // Verify recipient
     const recipient = await db.user.findUnique({
       where: { id: recipientId },
     });
@@ -24,7 +23,6 @@ const handler = async (data: InputType): Promise<ReturnType> => {
       return { error: "Recipient not found" };
     }
 
-    // Get sender for notification message
     const sender = await db.user.findUnique({
       where: { id: userId },
     });
@@ -32,27 +30,15 @@ const handler = async (data: InputType): Promise<ReturnType> => {
       return { error: "Sender not found" };
     }
 
-    // Store message
     const message = await db.chatMessage.create({
       data: {
         senderId: userId,
         recipientId,
         content,
-      },
-    });
-
-    // Create notification
-    await db.notification.create({
-      data: {
-        userId: recipientId,
-        senderId: userId,
-        message: `You have a new message from ${sender.firstName}.`,
         isRead: false,
-        cardId: null,
       },
     });
 
-    // Trigger Pusher event
     await pusherServer.trigger(`user-${recipientId}`, "new-message", {
       messageId: message.id,
       senderId: userId,

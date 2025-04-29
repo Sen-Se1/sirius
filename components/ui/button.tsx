@@ -21,6 +21,7 @@ const buttonVariants = cva(
         primary: "bg-sky-700 text-primary-foreground hover:bg-sky-700/90",
         transparent: "bg-transparent text-white hover:bg-white/20",
         gray: "bg-neutral-200 text-secondary-foreground hover:bg-neutral-300",
+        custom_ghost: "hover:text-accent-foreground",
       },
       size: {
         default: "h-10 px-4 py-2",

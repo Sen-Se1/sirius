@@ -51,12 +51,12 @@ const Notifications = ({ notifications }: NotificationsProps) => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
+          variant="custom_ghost"
           size="icon"
-          className="relative h-8 w-8 rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+          className="relative h-8 w-8 rounded-full hover:bg-transparent bg-transparent"
           aria-label="Notifications"
         >
-          <Bell className="h-5 w-5 text-gray-900 dark:text-gray-100" />
+          <Bell className="h-5 w-5 text-current" />
           {notifications.some((n) => !n.isRead) && (
             <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" />
           )}
@@ -67,7 +67,7 @@ const Notifications = ({ notifications }: NotificationsProps) => {
         className="w-96 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 p-1"
       >
         {notifications.length > 0 ? (
-          notifications.map((notification) => (
+          notifications.filter(n => n.cardId).map((notification) => (
             <DropdownMenuItem
               key={notification.id}
               asChild
@@ -77,36 +77,14 @@ const Notifications = ({ notifications }: NotificationsProps) => {
                   : "text-gray-900 dark:text-gray-100"
               } rounded-md focus:outline-none cursor-pointer transition-colors`}
             >
-              <div>
-                {notification.cardId ? (
-                  <Link
-                    href={`/board/${
-                      boardIdMap[notification.cardId] || notification.cardId
-                    }`}
-                    className="block w-full h-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700"
-                  >
-                    <span className="truncate">{notification.message}</span>
-                  </Link>
-                ) : (
-                  <Link
-                    href={`/chat/${notification.senderId || ""}`}
-                    className="block w-full h-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700"
-                  >
-                    <span className="truncate">{notification.message}</span>
-                  </Link>
-                )}
-                {!notification.isRead && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="ml-2 h-6 w-6"
-                    //   onClick={() => handleMarkAsRead(notification.id)}
-                    aria-label="Mark as read"
-                  >
-                    <Check className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
+              <Link
+                href={`/board/${
+                  notification.cardId ? boardIdMap[notification.cardId] || notification.cardId : ""
+                }`}
+                className="block w-full h-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700"
+              >
+                <span className="truncate">{notification.message}</span>
+              </Link>
             </DropdownMenuItem>
           ))
         ) : (

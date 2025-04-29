@@ -21,3 +21,22 @@ export type EmailPayload = {
   subject: string;
   html: string;
 };
+
+export interface UIChat {
+  id: string;
+  recipientId: string;
+  recipientFirstName: string;
+  recipientLastName: string;
+  recipientEmail: string;
+  recipientPhoto?: string;
+}
+
+export interface UIMessage {
+  id: string;
+  senderId: string;
+  text: string;
+  time: string;
+  isFromCurrentUser: boolean;
+  isPending?: boolean;
+  error?: boolean;
+}

@@ -3,7 +3,6 @@
 import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/logo";
-
 import { MobileSidebar } from "./mobile-sidebar";
 import { useEffect, useState } from "react";
 import NavbarSearch from "./nav-search";
@@ -11,6 +10,7 @@ import Notifications from "./notifications";
 import { computeAverageColor, getLuminance } from "@/lib/helper";
 import Favorites from "./favorites-dropdown";
 import { Notification } from "@prisma/client";
+import { Messenger } from "./messenger";
 
 interface NavbarProps {
   favorites: {
@@ -72,7 +72,7 @@ export const Navbar = ({ favorites, notifications }: NavbarProps) => {
   return (
     <nav
       style={{ backgroundColor: bgColor, color: textColor }}
-      className="fixed z-50 top-0 px-4 w-full h-16 border-b shadow-sm bg-white flex items-center left-0  justify-between"
+      className="fixed z-50 top-0 px-4 w-full h-16 border-b shadow-sm bg-white flex items-center left-0 justify-between"
     >
       <MobileSidebar />
       <div className="flex items-center gap-x-4">
@@ -97,10 +97,9 @@ export const Navbar = ({ favorites, notifications }: NavbarProps) => {
             },
           }}
         />
-        {/* <ThemeToggle /> */}
         <Favorites favorites={favorites} loading={false} />
+        <Messenger />
         <Notifications notifications={notifications} />
-
         <UserButton
           afterSignOutUrl="/"
           appearance={{
