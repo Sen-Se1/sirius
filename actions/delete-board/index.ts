@@ -15,6 +15,7 @@ import { ACTION, ENTITY_TYPE } from "@prisma/client";
 
 import { decreaseAvailableCount } from "@/lib/org-limit";
 import { checkSubscription } from "@/lib/subscription";
+import { pusherServer } from "@/lib/pusher";
 
 const handler = async (data: InputType): Promise<ReturnType> => {
   const { userId, orgId } = auth();
@@ -31,12 +32,43 @@ const handler = async (data: InputType): Promise<ReturnType> => {
   let board;
 
   try {
+    const lists = await db.list.findMany({
+      where: {
+        boardId: id,
+      },
+      select: {
+        cards: {
+          select: {
+            id: true,
+            notifications: {
+              select: {
+                id: true,
+                userId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const notifications = lists
+      .flatMap((list) => list.cards)
+      .flatMap((card) => card.notifications);
+
     board = await db.board.delete({
       where: {
         id,
         orgId,
       },
     });
+
+    for (const notification of notifications) {
+      await pusherServer.trigger(
+        `notifications-${notification.userId}`,
+        "notification-deleted",
+        { id: notification.id }
+      );
+    }
 
     if (!isPro) {
       await decreaseAvailableCount();

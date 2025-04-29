@@ -11,6 +11,7 @@ import { InputType, ReturnType } from "./types";
 
 import { createAuditLog } from "@/lib/create-audit-log";
 import { ACTION, ENTITY_TYPE } from "@prisma/client";
+import { pusherServer } from "@/lib/pusher";
 
 const handler = async (data: InputType): Promise<ReturnType> => {
   const { userId, orgId } = auth();
@@ -25,6 +26,23 @@ const handler = async (data: InputType): Promise<ReturnType> => {
   let list;
 
   try {
+    const cards = await db.card.findMany({
+      where: {
+        listId: id,
+      },
+      select: {
+        id: true,
+        notifications: {
+          select: {
+            id: true,
+            userId: true,
+          },
+        },
+      },
+    });
+
+    const notifications = cards.flatMap((card) => card.notifications);
+
     list = await db.list.delete({
       where: {
         id,
@@ -34,6 +52,14 @@ const handler = async (data: InputType): Promise<ReturnType> => {
         },
       },
     });
+
+    for (const notification of notifications) {
+      await pusherServer.trigger(
+        `notifications-${notification.userId}`,
+        "notification-deleted",
+        { id: notification.id }
+      );
+    }
 
     await createAuditLog({
       entityTitle: list.title,
