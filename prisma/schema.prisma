@@ -18,14 +18,13 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships       Member[]
-  favorites         Favorite[]     @relation()
-  sentMessages      ChatMessage[]  @relation(name: "Sender")
-  receivedMessages  ChatMessage[]  @relation(name: "Recipient")
-  notifications     Notification[] @relation(name: "Recipient")
-  sentNotifications Notification[] @relation(name: "Sender")
-  Invitation        Invitation[]   @relation(name: "Inviter")
-  auditLogs         AuditLog[]
+  memberships      Member[]
+  favorites        Favorite[]     @relation()
+  sentMessages     ChatMessage[]  @relation(name: "Sender")
+  receivedMessages ChatMessage[]  @relation(name: "Recipient")
+  Invitation       Invitation[]   @relation(name: "Inviter")
+  notifications    Notification[] @relation("UserNotifications")
+  auditLogs        AuditLog[]
 }
 
 model Organization {
@@ -213,23 +212,20 @@ model AuditLog {
 }
 
 model Notification {
-  id           String        @id @default(uuid())
+  id           String       @id @default(uuid())
   userId       String
-  user         User          @relation(name: "Recipient", fields: [userId], references: [id], onDelete: Cascade)
-  senderId     String?
-  sender       User?         @relation(name: "Sender", fields: [senderId], references: [id], onDelete: SetNull)
-  orgId        String?
-  organization Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  message      String        @db.Text
-  isRead       Boolean       @default(false)
-  cardId       String?
-  card         Card?         @relation(name: "CardNotifications", fields: [cardId], references: [id], onDelete: Cascade)
+  user         User         @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  orgId        String
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  message      String       @db.Text
+  isRead       Boolean      @default(false)
+  cardId       String
+  card         Card         @relation(name: "CardNotifications", fields: [cardId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
-  @@index([senderId])
   @@index([orgId])
   @@index([cardId])
 }

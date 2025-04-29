@@ -9,7 +9,6 @@ import NavbarSearch from "./nav-search";
 import Notifications from "./notifications";
 import { computeAverageColor, getLuminance } from "@/lib/helper";
 import Favorites from "./favorites-dropdown";
-import { Notification } from "@prisma/client";
 import { Messenger } from "./messenger";
 
 interface NavbarProps {
@@ -19,10 +18,9 @@ interface NavbarProps {
     createdAt: Date;
     board: { title: string };
   }[];
-  notifications: Notification[];
 }
 
-export const Navbar = ({ favorites, notifications }: NavbarProps) => {
+export const Navbar = ({ favorites }: NavbarProps) => {
   const [board, setBoard] = useState<any>(null);
   const [bgColor, setBgColor] = useState<string>("white");
   const [textColor, setTextColor] = useState<string>("black");
@@ -99,7 +97,7 @@ export const Navbar = ({ favorites, notifications }: NavbarProps) => {
         />
         <Favorites favorites={favorites} loading={false} />
         <Messenger />
-        <Notifications notifications={notifications} />
+        <Notifications />
         <UserButton
           afterSignOutUrl="/"
           appearance={{

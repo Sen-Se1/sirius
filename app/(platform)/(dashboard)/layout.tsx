@@ -4,6 +4,7 @@ import { getFavorites } from "@/actions/get-favorites";
 import { getNotifications } from "@/actions/get-notifications";
 import { Navbar } from "./_components/navbar";
 import { UnreadMessageProvider } from "@/components/providers/unread-message-provider";
+import { NotificationProvider } from "@/components/providers/notification-provider";
 import { getUnreadMessageCount } from "@/actions/get-unread-message-count";
 
 const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
@@ -16,21 +17,20 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   }
 
   if (notificationsResult.error || !notificationsResult.data) {
-    return (
-      <div>Error: {notificationsResult.error || "No notifications data"}</div>
-    );
+    return <div>Error: {notificationsResult.error || "No notifications data"}</div>;
   }
+
   const initialUnreadCount = unreadCountResult.data?.count || 0;
+  const initialNotifications = notificationsResult.data.notifications;
 
   return (
     <UnreadMessageProvider initialCount={initialUnreadCount}>
-      <div className="h-full">
-        <Navbar
-          favorites={favoritesResult.data.favorites}
-          notifications={notificationsResult.data.notifications}
-        />
-        <div className="bg-gray-100 h-full">{children}</div>
-      </div>
+      <NotificationProvider initialNotifications={initialNotifications}>
+        <div className="h-full">
+          <Navbar favorites={favoritesResult.data.favorites} />
+          <div className="bg-gray-100 h-full">{children}</div>
+        </div>
+      </NotificationProvider>
     </UnreadMessageProvider>
   );
 };

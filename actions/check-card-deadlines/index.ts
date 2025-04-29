@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { createSafeAction } from "@/lib/create-safe-action";
 import { CheckCardDeadlines } from "./schema";
 import { InputType, ReturnType } from "./types";
+import { pusherServer } from "@/lib/pusher";
 
 const handler = async (data: InputType): Promise<ReturnType> => {
   try {
@@ -30,13 +31,12 @@ const handler = async (data: InputType): Promise<ReturnType> => {
     let notificationsCreated = 0;
 
     for (const card of overdueCards) {
-      // Notify organization members
       const members = await db.member.findMany({
         where: { orgId: card.list.board.orgId },
       });
 
       for (const member of members) {
-        await db.notification.create({
+        const notification = await db.notification.create({
           data: {
             userId: member.userId,
             orgId: card.list.board.orgId,
@@ -46,6 +46,12 @@ const handler = async (data: InputType): Promise<ReturnType> => {
           },
         });
         notificationsCreated++;
+
+        await pusherServer.trigger(
+          `notifications-${member.userId}`,
+          "new-notification",
+          notification
+        );
       }
     }
 

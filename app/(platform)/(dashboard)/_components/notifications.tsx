@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import { Bell, Check } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,20 +9,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getBoardIdFromCard } from "@/actions/get-board-id-from-card";
-import { Notification } from "@prisma/client";
+import { markNotificationAsRead } from "@/actions/mark-notification-as-read";
+import { useNotifications } from "@/components/providers/notification-provider";
 import { toast } from "sonner";
+import { Notification } from "@prisma/client";
 
-interface NotificationsProps {
-  notifications: Notification[];
-}
-
-const Notifications = ({ notifications }: NotificationsProps) => {
-  const [boardIdMap, setBoardIdMap] = useState<{ [cardId: string]: string }>(
-    {}
-  );
+const Notifications = () => {
+  const { notifications } = useNotifications();
+  const [boardIdMap, setBoardIdMap] = useState<{ [cardId: string]: string }>({});
+  const router = useRouter();
 
   useEffect(() => {
     const fetchBoardIds = async () => {
@@ -31,9 +29,7 @@ const Notifications = ({ notifications }: NotificationsProps) => {
 
       for (const notification of cardNotifications) {
         if (notification.cardId && !boardIdMap[notification.cardId]) {
-          const result = await getBoardIdFromCard({
-            cardId: notification.cardId,
-          });
+          const result = await getBoardIdFromCard({ cardId: notification.cardId });
           if (result.data && result.data.boardId) {
             newBoardIdMap[notification.cardId] = result.data.boardId;
           } else {
@@ -46,6 +42,16 @@ const Notifications = ({ notifications }: NotificationsProps) => {
 
     fetchBoardIds();
   }, [notifications]);
+
+  const handleNotificationClick = async (notification: Notification) => {
+    const result = await markNotificationAsRead({ notificationId: notification.id });
+    if (result.data?.success) {
+      const boardId = boardIdMap[notification.cardId!] || notification.cardId;
+      router.push(`/board/${boardId}`);
+    } else {
+      toast.error(result.error || "Failed to mark notification as read");
+    }
+  };
 
   return (
     <DropdownMenu>
@@ -67,26 +73,21 @@ const Notifications = ({ notifications }: NotificationsProps) => {
         className="w-96 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 p-1"
       >
         {notifications.length > 0 ? (
-          notifications.filter(n => n.cardId).map((notification) => (
-            <DropdownMenuItem
-              key={notification.id}
-              asChild
-              className={`px-3 py-2 text-sm ${
-                notification.isRead
-                  ? "text-gray-500 dark:text-gray-400"
-                  : "text-gray-900 dark:text-gray-100"
-              } rounded-md focus:outline-none cursor-pointer transition-colors`}
-            >
-              <Link
-                href={`/board/${
-                  notification.cardId ? boardIdMap[notification.cardId] || notification.cardId : ""
-                }`}
-                className="block w-full h-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700"
+          notifications
+            .filter((n) => n.cardId)
+            .map((notification) => (
+              <DropdownMenuItem
+                key={notification.id}
+                onSelect={() => handleNotificationClick(notification)}
+                className={`px-3 py-2 text-sm ${
+                  notification.isRead
+                    ? "text-gray-500 dark:text-gray-400"
+                    : "text-gray-900 dark:text-gray-100"
+                } rounded-md focus:outline-none cursor-pointer transition-colors`}
               >
                 <span className="truncate">{notification.message}</span>
-              </Link>
-            </DropdownMenuItem>
-          ))
+              </DropdownMenuItem>
+            ))
         ) : (
           <DropdownMenuItem className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 cursor-default select-none">
             No notifications
