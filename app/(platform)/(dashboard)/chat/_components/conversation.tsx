@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Send, ImageIcon, FileText } from "lucide-react";
+import { Send, ImageIcon, FileText, Check, CheckCheck } from "lucide-react";
 import { pusherClient } from "@/lib/pusher";
 import { sendMessage } from "@/actions/send-message";
 import { getMessages } from "@/actions/get-messages";
@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUnreadMessageContext } from "@/components/providers/unread-message-provider";
 import { markMessagesAsRead } from "@/actions/mark-messages-as-read";
 import { useAuth } from "@clerk/nextjs";
+import Image from "next/image";
 
 interface UnreadCounts {
   [senderId: string]: number;
@@ -25,7 +26,11 @@ interface ConversationProps {
   setUnreadCounts: React.Dispatch<React.SetStateAction<UnreadCounts>>;
 }
 
-const Conversation = ({ selectedChat, showProfile = false, setUnreadCounts}: ConversationProps) => {
+const Conversation = ({
+  selectedChat,
+  showProfile = false,
+  setUnreadCounts,
+}: ConversationProps) => {
   const [realtimeMessages, setRealtimeMessages] = useState<UIMessage[]>([]);
   const [message, setMessage] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
@@ -63,6 +68,7 @@ const Conversation = ({ selectedChat, showProfile = false, setUnreadCounts}: Con
       text: msg.content,
       time: msg.createdAt ? formatDate(msg.createdAt) : "now",
       isFromCurrentUser: msg.senderId === userId,
+      isRead: msg.isRead,
     }));
     setIsLoading(false);
     return formattedMessages;
@@ -73,31 +79,60 @@ const Conversation = ({ selectedChat, showProfile = false, setUnreadCounts}: Con
 
     const channel = pusherClient.subscribe(`user-${userId}`);
 
-    channel.bind("new-message", (data: { messageId: string; senderId: string; content: string; createdAt: string }) => {
-      if (data.senderId === selectedChat.recipientId) {
-        const newMessage = {
-          id: data.messageId,
-          senderId: data.senderId,
-          text: data.content,
-          time: formatDate(data.createdAt),
-          isFromCurrentUser: false,
-        };
-        setRealtimeMessages((prev) => {
-          if (prev.some((msg) => msg.id === newMessage.id)) return prev;
-          return [...prev, newMessage];
-        });
-        scrollToBottom();
-        markMessagesAsRead({ senderId: data.senderId }).then((result) => {
-          if (result.data) setUnreadCount(result.data.newUnreadCount);
-        });
+    channel.bind(
+      "new-message",
+      (data: {
+        messageId: string;
+        senderId: string;
+        content: string;
+        createdAt: string;
+      }) => {
+        if (data.senderId === selectedChat.recipientId) {
+          const newMessage = {
+            id: data.messageId,
+            senderId: data.senderId,
+            text: data.content,
+            time: formatDate(data.createdAt),
+            isFromCurrentUser: false,
+            isRead: false,
+          };
+          setRealtimeMessages((prev) => {
+            if (prev.some((msg) => msg.id === newMessage.id)) return prev;
+            return [...prev, newMessage];
+          });
+          scrollToBottom();
+          markMessagesAsRead({ senderId: data.senderId }).then((result) => {
+            if (result.data) {
+              setUnreadCount(result.data.newUnreadCount);
+              setUnreadCounts((prev) => ({
+                ...prev,
+                [data.senderId]: 0,
+              }));
+            }
+          });
+        }
       }
-    });
+    );
+
+    channel.bind(
+      "message-read",
+      (data: { messageIds: string[]; senderId: string }) => {
+        if (data.senderId === selectedChat.recipientId) {
+          setRealtimeMessages((prev) =>
+            prev.map((msg) =>
+              data.messageIds.includes(msg.id) ? { ...msg, isRead: true } : msg
+            )
+          );
+        }
+      }
+    );
 
     return () => {
       pusherClient.unsubscribe(`user-${userId}`);
       pusherClient.unbind("new-message");
+      pusherClient.unbind("message-read");
     };
-  }, [userId, selectedChat]);
+  }, [userId, selectedChat?.recipientId]);
 
   useEffect(() => {
     if (selectedChat && userId) {
@@ -105,12 +140,20 @@ const Conversation = ({ selectedChat, showProfile = false, setUnreadCounts}: Con
       fetchMessages(selectedChat.recipientId).then((formattedMessages) => {
         setRealtimeMessages(formattedMessages);
         scrollToBottom();
-        markMessagesAsRead({ senderId: selectedChat.recipientId }).then((result) => {
-          if (result.data) setUnreadCount(result.data.newUnreadCount);
-        });
+        markMessagesAsRead({ senderId: selectedChat.recipientId }).then(
+          (result) => {
+            if (result.data) {
+              setUnreadCount(result.data.newUnreadCount);
+              setUnreadCounts((prev) => ({
+                ...prev,
+                [selectedChat.recipientId]: 0,
+              }));
+            }
+          }
+        );
       });
     }
-  }, [selectedChat, userId]);
+  }, [selectedChat?.recipientId, userId]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -137,6 +180,7 @@ const Conversation = ({ selectedChat, showProfile = false, setUnreadCounts}: Con
         time: currentTime,
         isFromCurrentUser: true,
         isPending: true,
+        isRead: false,
       };
 
       setRealtimeMessages((prev) => [...prev, newMessage]);
@@ -156,7 +200,12 @@ const Conversation = ({ selectedChat, showProfile = false, setUnreadCounts}: Con
         setRealtimeMessages((prev) =>
           prev.map((msg) =>
             msg.id === tempId
-              ? { ...msg, id: serverMessage?.id ?? tempId, isPending: false }
+              ? {
+                  ...msg,
+                  id: serverMessage?.id ?? tempId,
+                  isPending: false,
+                  isRead: serverMessage?.isRead ?? false,
+                }
               : msg
           )
         );
@@ -176,22 +225,38 @@ const Conversation = ({ selectedChat, showProfile = false, setUnreadCounts}: Con
   };
 
   useEffect(() => {
-    const markAsRead = async () => {
-      try {
-        if (selectedChat) {
-          await markMessagesAsRead({ senderId: selectedChat.recipientId });
+    if (selectedChat && userId) {
+      const markAsRead = async () => {
+        try {
+          const result = await markMessagesAsRead({
+            senderId: selectedChat.recipientId,
+          });
+          if (result.data) {
+            setUnreadCount(result.data.newUnreadCount);
+            setUnreadCounts((prev) => ({
+              ...prev,
+              [selectedChat.recipientId]: 0,
+            }));
+          }
+        } catch (error) {
+          console.error("Error marking messages as read:", error);
         }
-        setUnreadCounts((prev) => ({
-          ...prev,
-          [selectedChat?.recipientId ?? ""]: 0,
-        }));
-      } catch (error) {
-        console.error("Error marking messages as read:", error);
-      }
-    };
-    markAsRead();
-  }, [selectedChat?.recipientId, setUnreadCounts]);
-  
+      };
+      markAsRead();
+    }
+  }, [selectedChat?.recipientId, userId, setUnreadCounts]);
+
+  const lastSentMessageIndex = realtimeMessages
+    .slice()
+    .reverse()
+    .findIndex(
+      (msg) => msg.isFromCurrentUser && !msg.isPending && !msg.error
+    );
+  const lastSentMessageId =
+    lastSentMessageIndex !== -1
+      ? realtimeMessages[realtimeMessages.length - 1 - lastSentMessageIndex].id
+      : null;
+
   if (!selectedChat) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50">
@@ -201,7 +266,11 @@ const Conversation = ({ selectedChat, showProfile = false, setUnreadCounts}: Con
   }
 
   return (
-    <div className={`flex-1 flex flex-col ${showProfile ? "md:w-[calc(100%-20rem)]" : "w-full"}`}>
+    <div
+      className={`flex-1 flex flex-col ${
+        showProfile ? "md:w-[calc(100%-20rem)]" : "w-full"
+      }`}
+    >
       <Card className="flex-1 bg-gray-50 border-none">
         <CardContent className="p-4 h-full">
           {isLoading ? (
@@ -221,7 +290,12 @@ const Conversation = ({ selectedChat, showProfile = false, setUnreadCounts}: Con
             <ScrollArea className="h-[calc(100vh-240px)]">
               <div className="space-y-4 p-4">
                 {realtimeMessages.map((msg) => (
-                  <div key={msg.id} className={`flex ${msg.isFromCurrentUser ? "justify-end" : "justify-start"}`}>
+                  <div
+                    key={msg.id}
+                    className={`flex ${
+                      msg.isFromCurrentUser ? "justify-end" : "justify-start"
+                    }`}
+                  >
                     <div
                       className={`max-w-[75%] rounded-lg p-3 ${
                         msg.isFromCurrentUser
@@ -232,12 +306,53 @@ const Conversation = ({ selectedChat, showProfile = false, setUnreadCounts}: Con
                       <p>{msg.text}</p>
                       <div
                         className={`text-xs mt-1 flex items-center ${
-                          msg.isFromCurrentUser ? "text-blue-100" : "text-gray-500"
+                          msg.isFromCurrentUser
+                            ? "text-blue-100 justify-end"
+                            : "text-gray-500"
                         }`}
                       >
                         <span>{msg.time}</span>
-                        {msg.isPending && <span className="ml-2 text-blue-100">Send in progress...</span>}
-                        {msg.error && <span className="ml-2 text-red-300">Failure of sending</span>}
+                        {msg.isFromCurrentUser && (
+                          <>
+                            {msg.isPending && (
+                              <span className="ml-2 text-blue-100">
+                                Sending...
+                              </span>
+                            )}
+                            {!msg.isPending && msg.error && (
+                              <span className="ml-2 text-red-300">
+                                Failed to send
+                              </span>
+                            )}
+                            {!msg.isPending &&
+                              !msg.error &&
+                              msg.id === lastSentMessageId && (
+                                <span className="ml-2 flex items-center">
+                                  {msg.isRead ? (
+                                    selectedChat.recipientPhoto ? (
+                                      <Image
+                                        src={selectedChat.recipientPhoto}
+                                        alt="Seen"
+                                        width={16}
+                                        height={16}
+                                        className="rounded-full"
+                                      />
+                                    ) : (
+                                      <CheckCheck
+                                        size={16}
+                                        className="text-blue-100"
+                                      />
+                                    )
+                                  ) : (
+                                    <Check
+                                      size={16}
+                                      className="text-blue-100"
+                                    />
+                                  )}
+                                </span>
+                              )}
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

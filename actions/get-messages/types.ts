@@ -12,5 +12,13 @@ export type SendMessageReturnType = ActionState<
 export type GetMessagesInputType = z.infer<typeof GetMessages>;
 export type GetMessagesReturnType = ActionState<
   GetMessagesInputType,
-  { messages: ChatMessage[] }
+  {
+    messages: {
+      id: string;
+      senderId: string;
+      content: string;
+      createdAt: Date;
+      isRead: boolean;
+    }[];
+  }
 >;

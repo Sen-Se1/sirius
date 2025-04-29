@@ -6,5 +6,5 @@ export type InputType = z.infer<typeof MarkMessagesAsRead>;
 
 export type ReturnType = ActionState<
   InputType,
-  { success: boolean }
+  { success: boolean; newUnreadCount: number }
 >;

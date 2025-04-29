@@ -24,8 +24,13 @@ const handler = async (
           { senderId: recipientId, recipientId: userId },
         ],
       },
-      orderBy: {
-        createdAt: "asc",
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        senderId: true,
+        content: true,
+        createdAt: true,
+        isRead: true,
       },
     });
 
