@@ -31,19 +31,16 @@ export function NotificationProvider({
     const channel = pusherClient.subscribe(`notifications-${userId}`);
 
     channel.bind("new-notification", (data: Notification) => {
-      console.log("New notification received:", data);
       setNotifications((prev) => [data, ...prev]);
     });
 
     channel.bind("notification-updated", (data: { id: string; isRead: boolean }) => {
-      console.log("Notification updated:", data);
       setNotifications((prev) =>
         prev.map((n) => (n.id === data.id ? { ...n, isRead: data.isRead } : n))
       );
     });
 
     channel.bind("notification-deleted", (data: { id: string }) => {
-      console.log("Notification deleted:", data);
       setNotifications((prev) => prev.filter((n) => n.id !== data.id));
     });
 

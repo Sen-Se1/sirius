@@ -15,9 +15,7 @@ const handler = async (
   }
 
   const { recipientId } = data;
-  console.log(recipientId);
   
-
   try {
     const messages = await db.chatMessage.findMany({
       where: {

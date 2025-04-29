@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Sidebar from "./_components/sidebar";
 import ChatList from "./_components/chat-list";
 import ChatHeader from "./_components/chat-header";
 import Conversation from "./_components/conversation";
 import { UIChat } from "@/types";
-import { useAuth } from "@clerk/nextjs";
 import ProfilePanel from "./_components/profile-panel";
+import { getUnreadCountsPerSender } from "@/actions/get-unread-counts-per-sender";
+
+interface UnreadCounts {
+  [senderId: string]: number;
+}
 
 export default function Chat() {
   const [activeSection, setActiveSection] = useState<"messages" | "settings">(
@@ -15,8 +19,18 @@ export default function Chat() {
   );
   const [selectedChat, setSelectedChat] = useState<UIChat | null>(null);
   const [showProfile, setShowProfile] = useState(false);
-  const { userId } = useAuth();
+  const [unreadCounts, setUnreadCounts] = useState<UnreadCounts>({});
 
+  useEffect(() => {
+    const fetchUnreadCounts = async () => {
+      const result = await getUnreadCountsPerSender({});
+      if (result.data) {
+        setUnreadCounts(result.data);
+      }
+    };
+    fetchUnreadCounts();
+  }, []);
+  
   return (
     <div className="flex h-screen bg-gray-100">
       <Sidebar
@@ -24,10 +38,11 @@ export default function Chat() {
         setActiveSection={setActiveSection}
       />
       <ChatList
-        userId={userId || ""}
         activeSection={activeSection}
         selectedChat={selectedChat}
         setSelectedChat={setSelectedChat}
+        unreadCounts={unreadCounts}
+        setUnreadCounts={setUnreadCounts}
       />
       <div className="flex-1 bg-gray-50 h-[calc(100vh-64px)] mt-16 flex flex-col">
         {selectedChat ? (
@@ -41,9 +56,9 @@ export default function Chat() {
               <Conversation
                 selectedChat={selectedChat}
                 showProfile={showProfile}
-                userId={userId || ""}
+                setUnreadCounts={setUnreadCounts}
               />
-              {/* {showProfile && <ProfilePanel selectedChatData={selectedChat} setShowProfile={setShowProfile} />} */}
+              {showProfile && <ProfilePanel selectedChatData={selectedChat} setShowProfile={setShowProfile} />}
             </div>
           </>
         ) : (

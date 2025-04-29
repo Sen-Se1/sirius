@@ -9,22 +9,31 @@ import { UIChat } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { pusherClient } from "@/lib/pusher";
+import { useAuth } from "@clerk/nextjs";
+
+interface UnreadCounts {
+  [senderId: string]: number;
+}
 
 interface ChatListProps {
-  userId: string;
   activeSection: "messages" | "settings";
   selectedChat: UIChat | null;
   setSelectedChat: (chat: UIChat | null) => void;
+  unreadCounts: UnreadCounts;
+  setUnreadCounts: React.Dispatch<React.SetStateAction<UnreadCounts>>;
 }
 
 export default function ChatList({
-  userId,
   activeSection,
   selectedChat,
   setSelectedChat,
+  unreadCounts,
+  setUnreadCounts,
 }: ChatListProps) {
   const [users, setUsers] = useState<UserType[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const { userId } = useAuth();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -42,6 +51,26 @@ export default function ChatList({
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = pusherClient.subscribe(`user-${userId}`);
+
+    channel.bind("new-message", (data: { senderId: string }) => {
+      if (selectedChat?.recipientId !== data.senderId) {
+        setUnreadCounts((prev) => ({
+          ...prev,
+          [data.senderId]: (prev[data.senderId] || 0) + 1,
+        }));
+      }
+    });
+
+    return () => {
+      pusherClient.unsubscribe(`user-${userId}`);
+      pusherClient.unbind("new-message");
+    };
+  }, [userId, selectedChat, setUnreadCounts]);
+  
   const filteredUsers = users
     .filter((user) => user.id !== userId)
     .filter(
@@ -116,6 +145,11 @@ export default function ChatList({
                     </h3>
                     <p className="text-sm text-gray-600">{user.email}</p>
                   </div>
+                  {unreadCounts[user.id] > 0 && (
+                    <div className="ml-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                      {unreadCounts[user.id]}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

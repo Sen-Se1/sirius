@@ -17,23 +17,15 @@ const handler = async (data: InputType): Promise<ReturnType> => {
   try {
     await db.chatMessage.updateMany({
       where: {
-        recipientId: userId,
         senderId,
+        recipientId: userId,
         isRead: false,
       },
       data: {
         isRead: true,
       },
     });
-
-    const newUnreadCount = await db.chatMessage.count({
-      where: {
-        recipientId: userId,
-        isRead: false,
-      },
-    });
-
-    return { data: { newUnreadCount } };
+    return { data: { success: true } };
   } catch (error) {
     console.error("Error marking messages as read:", error);
     return { error: "Failed to mark messages as read" };

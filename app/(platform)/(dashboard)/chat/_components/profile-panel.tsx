@@ -78,7 +78,7 @@ export default function ProfilePanel({ selectedChatData, setShowProfile }: Profi
       <div className="p-4">
         <h3 className="font-medium mb-4">Fichiers partagés</h3>
         <div className="space-y-4">
-          {selectedChatData.media.map((item) => (
+          {/* {selectedChatData.media.map((item) => (
             <div key={item.id} className="flex items-center p-2 hover:bg-gray-50 rounded-lg">
               {item.type === "image" && <ImageIcon size={20} className="text-blue-500" />}
               {item.type === "file" && <FileText size={20} className="text-green-500" />}
@@ -88,7 +88,7 @@ export default function ProfilePanel({ selectedChatData, setShowProfile }: Profi
                 <p className="text-xs text-gray-500">{item.date}</p>
               </div>
             </div>
-          ))}
+          ))} */}
         </div>
       </div>
     </div>

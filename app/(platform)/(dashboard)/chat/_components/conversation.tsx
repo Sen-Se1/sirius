@@ -13,20 +13,26 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUnreadMessageContext } from "@/components/providers/unread-message-provider";
 import { markMessagesAsRead } from "@/actions/mark-messages-as-read";
+import { useAuth } from "@clerk/nextjs";
 
-interface ConversationProps {
-  userId: string;
-  selectedChat?: UIChat;
-  showProfile?: boolean;
+interface UnreadCounts {
+  [senderId: string]: number;
 }
 
-const Conversation = ({ selectedChat, showProfile = false, userId }: ConversationProps) => {
+interface ConversationProps {
+  selectedChat?: UIChat;
+  showProfile?: boolean;
+  setUnreadCounts: React.Dispatch<React.SetStateAction<UnreadCounts>>;
+}
+
+const Conversation = ({ selectedChat, showProfile = false, setUnreadCounts}: ConversationProps) => {
   const [realtimeMessages, setRealtimeMessages] = useState<UIMessage[]>([]);
   const [message, setMessage] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isSending, setIsSending] = useState(false);
   const { setUnreadCount } = useUnreadMessageContext();
+  const { userId } = useAuth();
 
   const formatDate = (dateStr: string | Date): string => {
     try {
@@ -169,6 +175,23 @@ const Conversation = ({ selectedChat, showProfile = false, userId }: Conversatio
     }
   };
 
+  useEffect(() => {
+    const markAsRead = async () => {
+      try {
+        if (selectedChat) {
+          await markMessagesAsRead({ senderId: selectedChat.recipientId });
+        }
+        setUnreadCounts((prev) => ({
+          ...prev,
+          [selectedChat?.recipientId ?? ""]: 0,
+        }));
+      } catch (error) {
+        console.error("Error marking messages as read:", error);
+      }
+    };
+    markAsRead();
+  }, [selectedChat?.recipientId, setUnreadCounts]);
+  
   if (!selectedChat) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50">
