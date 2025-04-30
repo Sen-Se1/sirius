@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { AlignJustify, Grid2x2, HelpCircle, User2 } from "lucide-react";
+import { AlignJustify, Grid2x2, HelpCircle, LayoutDashboard } from "lucide-react";
 import { FormPopover } from "@/components/form/form-popover";
 import { Hint } from "@/components/hint";
 import NavbarSearch from "./nav-search";
@@ -29,7 +29,7 @@ const BoardListClient = ({ boards, availableCount, isPro }: BoardListClientProps
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <div className="flex items-center font-semibold text-lg text-neutral-700">
-            <User2 className="h-6 w-6 mr-2" />
+            <LayoutDashboard className="h-6 w-6 mr-2" />
             Your boards
           </div>
           <div className="ml-4 flex items-center">
