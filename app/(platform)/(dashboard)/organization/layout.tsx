@@ -9,17 +9,17 @@ const OrganizationLayout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-    <main className="pt-[64px] px-4 max-w-6xl 2xl:max-w-screen-xl h-full">
+    <main className="pt-[64px] px-4 w-6xl h-full">
       <div className="flex gap-x-1 h-full">
         {isSidebarOpen ? (
-          <div className="w-64 shrink-0 md:block hidden px-2 pt-12 border-r-4 bg-white border-neutral-200 dark:border-neutral-700 relative h-full">
+          <div className="w-64 ml-[-16px] shrink-0 block px-2 pt-12 border-r-4 bg-white border-neutral-200 relative h-full">
             <Button
               variant="ghost"
               onClick={() => setIsSidebarOpen(false)}
               className="absolute top-0 right-0 mt-2 mr-2"
               aria-label="Close sidebar"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-6 w-6" />
             </Button>
             <Sidebar />
           </div>
