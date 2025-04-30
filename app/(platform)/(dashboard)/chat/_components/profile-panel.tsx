@@ -46,13 +46,13 @@ export default function ProfilePanel({
       </div>
 
       <div className="p-4 border-b">
-        <h3 className="font-medium mb-2">Rechercher dans la discussion</h3>
+        <h3 className="font-medium mb-2">Search for discussion</h3>
         <div className="relative">
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Rechercher des messages..."
+            placeholder="Search for messages..."
             className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg outline-none"
           />
           <Search className="absolute left-3 top-2.5 text-gray-500" size={20} />
