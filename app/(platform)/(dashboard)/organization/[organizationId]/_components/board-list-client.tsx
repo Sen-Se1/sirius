@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { AlignJustify, Grid2x2, HelpCircle, LayoutDashboard } from "lucide-react";
+import {
+  AlignJustify,
+  Grid2x2,
+  HelpCircle,
+  LayoutDashboard,
+} from "lucide-react";
 import { FormPopover } from "@/components/form/form-popover";
 import { Hint } from "@/components/hint";
 import NavbarSearch from "./nav-search";
@@ -16,7 +21,11 @@ interface BoardListClientProps {
   isPro: boolean;
 }
 
-const BoardListClient = ({ boards, availableCount, isPro }: BoardListClientProps) => {
+const BoardListClient = ({
+  boards,
+  availableCount,
+  isPro,
+}: BoardListClientProps) => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -32,6 +41,12 @@ const BoardListClient = ({ boards, availableCount, isPro }: BoardListClientProps
             <LayoutDashboard className="h-6 w-6 mr-2" />
             Your boards
           </div>
+        </div>
+        <div className="flex items-center">
+          <NavbarSearch
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
           <div className="ml-4 flex items-center">
             <Grid2x2
               className={`h-6 w-6 mr-2 cursor-pointer ${
@@ -46,12 +61,6 @@ const BoardListClient = ({ boards, availableCount, isPro }: BoardListClientProps
               onClick={() => setViewMode("list")}
             />
           </div>
-        </div>
-        <div className="flex items-center">
-          <NavbarSearch
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
         </div>
       </div>
       {viewMode === "grid" ? (
@@ -70,7 +79,7 @@ const BoardListClient = ({ boards, availableCount, isPro }: BoardListClientProps
           <FormPopover sideOffset={10} side="right">
             <div
               role="button"
-              className="aspect-video relative h-full w-full bg-muted rounded-sm flex flex-col gap-y-1 items-center justify-center hover:opacity-75 transition"
+              className="aspect-video relative h-full w-full bg-gray-300 rounded-sm flex flex-col gap-y-1 items-center justify-center hover:opacity-75 transition"
             >
               <p className="text-sm">Create new board</p>
               <span className="text-xs">
@@ -110,7 +119,7 @@ const BoardListClient = ({ boards, availableCount, isPro }: BoardListClientProps
           <FormPopover sideOffset={10} side="right">
             <div
               role="button"
-              className="p-2 bg-muted rounded-sm relative flex flex-col gap-y-1 items-center justify-center hover:opacity-75 transition"
+              className="p-2 bg-gray-300 rounded-sm relative flex flex-col gap-y-1 items-center justify-center hover:opacity-75 transition"
             >
               <p className="text-sm">Create new board</p>
               <span className="text-xs">

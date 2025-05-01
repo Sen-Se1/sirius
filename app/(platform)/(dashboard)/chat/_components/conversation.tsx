@@ -38,6 +38,7 @@ const Conversation = ({
   const [isSending, setIsSending] = useState(false);
   const { setUnreadCount } = useUnreadMessageContext();
   const { userId } = useAuth();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const formatDate = (dateStr: string | Date): string => {
     try {
@@ -154,6 +155,12 @@ const Conversation = ({
       });
     }
   }, [selectedChat?.recipientId, userId]);
+
+  useEffect(() => {
+    if (selectedChat && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [selectedChat]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -386,6 +393,7 @@ const Conversation = ({
             </div>
             <Input
               placeholder="Write your message..."
+              ref={inputRef}
               value={message}
               className="flex-1 bg-gray-100 border-0"
               onChange={(e) => setMessage(e.target.value)}

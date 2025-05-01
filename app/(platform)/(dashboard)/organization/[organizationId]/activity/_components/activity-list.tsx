@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { ActivityItem } from "@/components/activity-item";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const ActivityList = async () => {
   const { orgId } = auth();
@@ -22,13 +23,17 @@ export const ActivityList = async () => {
   });
 
   return (
-    <ol className="space-y-4 mt-4">
+    <ol className="mt-4">
       <p className="hidden last:block text-xs text-center text-muted-foreground">
         No activity found inside this organization
       </p>
-      {auditLogs.map((log) => (
-        <ActivityItem key={log.id} data={log} />
-      ))}
+      <ScrollArea className="h-[calc(100vh-175px)]">
+        <div className="space-y-4">
+          {auditLogs.map((log) => (
+            <ActivityItem key={log.id} data={log} />
+          ))}
+        </div>
+      </ScrollArea>
     </ol>
   );
 };

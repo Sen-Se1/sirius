@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { UIChat } from "@/types";
-import { User, ChevronLeft } from "lucide-react";
+import { User, ChevronRight } from "lucide-react";
 import Image from "next/image";
 
 interface ChatHeaderProps {
@@ -49,7 +49,7 @@ export default function ChatHeader({
           onClick={() => setShowProfile(!showProfile)}
           className="p-2 hover:bg-gray-100 rounded-full"
         >
-          {showProfile ? <ChevronLeft size={20} /> : <User size={20} />}
+          {showProfile ? <ChevronRight size={20} /> : <User size={20} />}
         </Button>
       </div>
     </div>

@@ -9,7 +9,7 @@ const PlatformLayout = ({ children }: { children: React.ReactNode }) => {
       <QueryProvider>
         <Toaster />
         <ModalProvider />
-        {children}
+        <div className="h-full">{children}</div>
       </QueryProvider>
     </ClerkProvider>
   );

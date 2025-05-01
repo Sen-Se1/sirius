@@ -9,8 +9,8 @@ const OrganizationLayout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-    <main className="pt-[64px] px-4 w-6xl h-full">
-      <div className="flex gap-x-1 h-full">
+    <main className="pt-[64px] px-4 w-6xl h-full flex flex-col">
+      <div className="flex gap-x-1 flex-1">
         {isSidebarOpen ? (
           <div className="w-64 ml-[-16px] shrink-0 block px-2 pt-12 border-r-4 bg-white border-neutral-200 relative h-full">
             <Button
