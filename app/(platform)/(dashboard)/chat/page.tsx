@@ -30,7 +30,7 @@ export default function Chat() {
     };
     fetchUnreadCounts();
   }, []);
-  
+
   return (
     <div className="flex h-screen bg-gray-100">
       <Sidebar
@@ -58,7 +58,17 @@ export default function Chat() {
                 showProfile={showProfile}
                 setUnreadCounts={setUnreadCounts}
               />
-              {showProfile && <ProfilePanel selectedChatData={selectedChat} setShowProfile={setShowProfile} />}
+              <div
+                className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                  showProfile ? "w-full md:w-80 opacity-100" : "w-0 opacity-0"
+                }`}
+              >
+                <ProfilePanel
+                  selectedChatData={selectedChat}
+                  setShowProfile={setShowProfile}
+                  isVisible={showProfile}
+                />
+              </div>
             </div>
           </>
         ) : (

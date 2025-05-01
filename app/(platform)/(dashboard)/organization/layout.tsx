@@ -4,15 +4,28 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Sidebar } from "../_components/sidebar";
 import { Button } from "@/components/ui/button";
+import clsx from "clsx";
 
 const OrganizationLayout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-    <main className="pt-[64px] px-4 w-6xl h-full flex flex-col">
-      <div className="flex gap-x-1 flex-1">
-        {isSidebarOpen ? (
-          <div className="w-64 ml-[-16px] shrink-0 block px-2 pt-12 border-r-4 bg-white border-neutral-200 relative h-full">
+    <main className="pt-[64px] px-4 w-6xl h-full flex flex-col overflow-hidden">
+      <div className="flex flex-1 h-full">
+        <div
+          className={clsx(
+            "relative transition-all duration-300 ease-in-out h-full ml-[-16px] bg-white shrink-0",
+            isSidebarOpen ? "w-64" : "w-0"
+          )}
+        >
+          <div
+            className={clsx(
+              "h-full transition-opacity duration-300 ease-in-out",
+              isSidebarOpen
+                ? "opacity-100 px-2 pt-12"
+                : "opacity-0 overflow-hidden"
+            )}
+          >
             <Button
               variant="ghost"
               onClick={() => setIsSidebarOpen(false)}
@@ -23,19 +36,22 @@ const OrganizationLayout = ({ children }: { children: React.ReactNode }) => {
             </Button>
             <Sidebar />
           </div>
-        ) : (
-          <Button
-            variant="ghost"
-            onClick={() => setIsSidebarOpen(true)}
-            className="md:block hidden p-2"
-            aria-label="Open sidebar"
-          >
-            <ChevronRight className="h-6 w-6" />
-          </Button>
-        )}
-        <div className="flex-1 h-full p-2">
-          {children}
         </div>
+
+        {!isSidebarOpen && (
+          <div className="flex items-start p-2">
+            <Button
+              variant="ghost"
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2"
+              aria-label="Open sidebar"
+            >
+              <ChevronRight className="h-6 w-6" />
+            </Button>
+          </div>
+        )}
+
+        <div className="flex-1 h-full p-2 overflow-auto">{children}</div>
       </div>
     </main>
   );
