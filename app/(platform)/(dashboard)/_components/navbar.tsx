@@ -70,7 +70,7 @@ export const Navbar = ({ favorites }: NavbarProps) => {
   return (
     <nav
       style={{ backgroundColor: bgColor, color: textColor }}
-      className="fixed z-50 top-0 px-4 w-full h-16 border-b shadow-sm bg-white flex items-center left-0 justify-between"
+      className="fixed z-50 top-0 px-4 w-full h-16 border-b shadow-sm flex items-center left-0 justify-between"
     >
       <MobileSidebar />
       <div className="flex items-center gap-x-4">
@@ -91,6 +91,10 @@ export const Navbar = ({ favorites }: NavbarProps) => {
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
+                color: textColor,
+              },
+              organizationSwitcherTrigger: {
+                color: textColor,
               },
             },
           }}
