@@ -10,6 +10,9 @@ export const CreateCard = z.object({
       message: "Title is too short",
     }),
   dueDate: z.string().optional(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH"], {
+    required_error: "Priority is required",
+  }),
   boardId: z.string(),
   listId: z.string(),
 });

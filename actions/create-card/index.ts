@@ -2,7 +2,7 @@
 
 import { auth } from "@clerk/nextjs";
 import { revalidatePath } from "next/cache";
-import { ACTION, ENTITY_TYPE } from "@prisma/client";
+import { ACTION, ENTITY_TYPE, PRIORITY } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/create-audit-log";
@@ -20,7 +20,7 @@ const handler = async (data: InputType): Promise<ReturnType> => {
     };
   }
 
-  const { title, dueDate, boardId, listId } = data;
+  const { title, dueDate, priority, boardId, listId } = data;
   let card;
 
   try {
@@ -53,6 +53,7 @@ const handler = async (data: InputType): Promise<ReturnType> => {
         listId,
         order: newOrder,
         dueDate: dueDate ? new Date(dueDate) : undefined,
+        priority: priority as PRIORITY,
       },
     });
 

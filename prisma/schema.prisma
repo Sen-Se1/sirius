@@ -129,12 +129,19 @@ model List {
   @@index([boardId])
 }
 
+enum PRIORITY {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 model Card {
-  id          String    @id @default(uuid())
-  title       String
-  description String?   @db.Text
-  dueDate     DateTime?
-  order       Int
+  id             String    @id @default(uuid())
+  title          String
+  description    String?   @db.Text
+  dueDate        DateTime?
+  priority       PRIORITY? @default(MEDIUM)
+  order          Int
 
   listId String
   list   List   @relation(fields: [listId], references: [id], onDelete: Cascade)

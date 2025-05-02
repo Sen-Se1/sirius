@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { FormSubmit } from "@/components/form/form-submit";
 import { FormTextarea } from "@/components/form/form-textarea";
 import { FormInput } from "@/components/form/form-input";
+import { FormSelect } from "@/components/form/form-select";
+import { PRIORITY } from "@prisma/client";
 
 interface CardFormProps {
   listId: string;
@@ -24,6 +26,7 @@ export const CardForm = forwardRef<HTMLTextAreaElement, CardFormProps>(
   ({ listId, enableEditing, disableEditing, isEditing }, ref) => {
     const params = useParams();
     const formRef = useRef<ElementRef<"form">>(null);
+    const selectTriggerRef = useRef<ElementRef<"button">>(null);
 
     const { execute, fieldErrors } = useAction(createCard, {
       onSuccess: (data) => {
@@ -41,12 +44,24 @@ export const CardForm = forwardRef<HTMLTextAreaElement, CardFormProps>(
       }
     };
 
-    useOnClickOutside(formRef, disableEditing);
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      const selectContent = document.querySelector("[data-radix-select-viewport]");
+
+      if (
+        selectTriggerRef.current?.contains(target) ||
+        selectContent?.contains(target)
+      ) {
+        return;
+      }
+
+      disableEditing();
+    };
+
+    useOnClickOutside(formRef, handleClickOutside);
     useEventListener("keydown", onKeyDown);
 
-    const onTextareakeyDown: KeyboardEventHandler<HTMLTextAreaElement> = (
-      e
-    ) => {
+    const onTextareakeyDown: KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         formRef.current?.requestSubmit();
@@ -56,10 +71,11 @@ export const CardForm = forwardRef<HTMLTextAreaElement, CardFormProps>(
     const onSubmit = (formData: FormData) => {
       const title = formData.get("title") as string;
       const dueDate = formData.get("dueDate") as string | null;
+      const priority = formData.get("priority") as PRIORITY;
       const listId = formData.get("listId") as string;
       const boardId = params.boardId as string;
 
-      execute({ title, dueDate: dueDate || undefined, listId, boardId });
+      execute({ title, dueDate: dueDate || undefined, priority, listId, boardId });
     };
 
     if (isEditing) {
@@ -78,13 +94,22 @@ export const CardForm = forwardRef<HTMLTextAreaElement, CardFormProps>(
           />
           <FormInput
             id="dueDate"
+            label="Due Date"
             type="date"
             placeholder="Select due date (optional)"
             errors={fieldErrors}
           />
+          <FormSelect
+            id="priority"
+            label="Priority"
+            placeholder="Select priority"
+            defaultValue="MEDIUM"
+            errors={fieldErrors}
+            ref={selectTriggerRef}
+          />
           <input hidden id="listId" name="listId" value={listId} readOnly />
           <div className="flex items-center gap-x-1">
-            <FormSubmit>Add card</FormSubmit>
+            <FormSubmit className="bg-blue-500 text-white hover:bg-blue-600">Add card</FormSubmit>
             <Button onClick={disableEditing} size="sm" variant="ghost">
               <X className="h-5 w-5" />
             </Button>
