@@ -79,7 +79,7 @@ export const Navbar = ({ favorites }: NavbarProps) => {
         </div>
       </div>
       <div className="ml-auto flex items-center gap-x-6">
-        <NavbarSearch />
+        <NavbarSearch bgColor={bgColor} textColor={textColor} />
         <OrganizationSwitcher
           hidePersonal
           afterCreateOrganizationUrl="/organization/:id"
