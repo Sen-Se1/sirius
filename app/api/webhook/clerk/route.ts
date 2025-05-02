@@ -54,14 +54,15 @@ export async function POST(req: Request) {
 
   // Handle organization events
   if (eventType === "organization.created" || eventType === "organization.updated") {
-    const { id, name } = payload.data;
+    const { id, name, slug, logo_url } = payload.data;    
 
     await db.organization.upsert({
       where: { id },
-      update: { name },
+      update: { name, slug, logo: logo_url },
       create: {
         id,
         name,
+        slug, logo: logo_url
       },
     });
   }

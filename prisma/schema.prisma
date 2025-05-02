@@ -30,6 +30,8 @@ model User {
 model Organization {
   id        String   @id
   name      String
+  slug      String
+  logo      String?   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -136,12 +138,12 @@ enum PRIORITY {
 }
 
 model Card {
-  id             String    @id @default(uuid())
-  title          String
-  description    String?   @db.Text
-  dueDate        DateTime?
-  priority       PRIORITY? @default(MEDIUM)
-  order          Int
+  id          String    @id @default(uuid())
+  title       String
+  description String?   @db.Text
+  dueDate     DateTime?
+  priority    PRIORITY? @default(MEDIUM)
+  order       Int
 
   listId String
   list   List   @relation(fields: [listId], references: [id], onDelete: Cascade)
