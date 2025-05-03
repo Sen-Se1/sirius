@@ -14,12 +14,14 @@ import PreviewImage from "@/components/modals/preview-image";
 interface ProfilePanelProps {
   selectedChatData: UIChat;
   setShowProfile: (show: boolean) => void;
+  setShowSearch: (show: boolean) => void;
   isVisible?: boolean;
 }
 
 export default function ProfilePanel({
   selectedChatData,
   setShowProfile,
+  setShowSearch,
   isVisible = true,
 }: ProfilePanelProps) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -178,7 +180,13 @@ export default function ProfilePanel({
             </div>
             <h3 className="text-sm font-medium">{userName}</h3>
             <p className="text-xs text-gray-500">{selectedChatData.recipientEmail}</p>
-            <div className="flex flex-col items-center gap-1 mt-2 p-2 rounded-lg cursor-pointer hover:bg-gray-100">
+            <div
+              className="flex flex-col items-center gap-1 mt-2 p-2 rounded-lg cursor-pointer hover:bg-gray-100"
+              onClick={() => {
+                setShowProfile(false);
+                setShowSearch(true);
+              }}
+            >
               <div className="bg-gray-500 rounded-full p-2">
                 <Search size={16} className="text-white" />
               </div>

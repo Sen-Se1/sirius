@@ -7,6 +7,7 @@ import ChatHeader from "./_components/chat-header";
 import Conversation from "./_components/conversation";
 import { UIChat } from "@/types";
 import ProfilePanel from "./_components/profile-panel";
+import SearchPanel from "./_components/search-panel";
 import { getUnreadCountsPerSender } from "@/actions/get-unread-counts-per-sender";
 
 interface UnreadCounts {
@@ -14,11 +15,10 @@ interface UnreadCounts {
 }
 
 export default function Chat() {
-  const [activeSection, setActiveSection] = useState<"messages" | "settings">(
-    "messages"
-  );
+  const [activeSection, setActiveSection] = useState<"messages" | "settings">("messages");
   const [selectedChat, setSelectedChat] = useState<UIChat | null>(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [unreadCounts, setUnreadCounts] = useState<UnreadCounts>({});
 
   useEffect(() => {
@@ -51,6 +51,8 @@ export default function Chat() {
               selectedChatData={selectedChat}
               showProfile={showProfile}
               setShowProfile={setShowProfile}
+              showSearch={showSearch}
+              setShowSearch={setShowSearch}
             />
             <div className="flex-1 flex">
               <Conversation
@@ -60,14 +62,23 @@ export default function Chat() {
               />
               <div
                 className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                  showProfile ? "w-full md:w-80 opacity-100" : "w-0 opacity-0"
+                  showProfile || showSearch ? "w-full md:w-80 opacity-100" : "w-0 opacity-0"
                 }`}
               >
-                <ProfilePanel
-                  selectedChatData={selectedChat}
-                  setShowProfile={setShowProfile}
-                  isVisible={showProfile}
-                />
+                {showSearch ? (
+                  <SearchPanel
+                    setShowSearch={setShowSearch}
+                    setShowProfile={setShowProfile}
+                    isVisible={showSearch}
+                  />
+                ) : (
+                  <ProfilePanel
+                    selectedChatData={selectedChat}
+                    setShowProfile={setShowProfile}
+                    setShowSearch={setShowSearch}
+                    isVisible={showProfile}
+                  />
+                )}
               </div>
             </div>
           </>
