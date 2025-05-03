@@ -15,7 +15,7 @@ const handler = async (
   }
 
   const { recipientId } = data;
-  
+
   try {
     const messages = await db.chatMessage.findMany({
       where: {
@@ -29,6 +29,9 @@ const handler = async (
         id: true,
         senderId: true,
         content: true,
+        filePath: true,
+        originalFileName: true,
+        fileType: true,
         createdAt: true,
         isRead: true,
       },

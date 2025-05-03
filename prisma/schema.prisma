@@ -31,7 +31,7 @@ model Organization {
   id        String   @id
   name      String
   slug      String
-  logo      String?   @db.Text
+  logo      String?  @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -240,14 +240,18 @@ model Notification {
 }
 
 model ChatMessage {
-  id          String   @id @default(uuid())
-  senderId    String
-  sender      User     @relation(name: "Sender", fields: [senderId], references: [id], onDelete: Cascade)
-  recipientId String
-  recipient   User     @relation(name: "Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  content     String   @db.Text
-  isRead      Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id               String   @id @default(uuid())
+  senderId         String
+  sender           User     @relation(name: "Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipientId      String
+  recipient        User     @relation(name: "Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  // content          String  @db.Text
+  content          String?  @db.Text
+  filePath         String?  @db.Text
+  originalFileName String?  @db.Text
+  fileType         String?  @db.Text
+  isRead           Boolean  @default(false)
+  createdAt        DateTime @default(now())
 
   @@index([senderId])
   @@index([recipientId])

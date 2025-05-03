@@ -17,7 +17,7 @@ export default function ChatHeader({
   setShowProfile,
 }: ChatHeaderProps) {
   return (
-    <div className="bg-white border-b p-4">
+    <div className="bg-white border-b px-4 py-1">
       <div className="flex items-center justify-between">
         <div
           className="flex items-center cursor-pointer"

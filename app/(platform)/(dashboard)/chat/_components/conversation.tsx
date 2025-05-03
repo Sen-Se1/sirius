@@ -2,10 +2,10 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Send, ImageIcon, FileText, Check, CheckCheck } from "lucide-react";
+import { Send, ImageIcon, FileText, Check, CheckCheck, X, Smile } from "lucide-react";
 import { pusherClient } from "@/lib/pusher";
-import { sendMessage } from "@/actions/send-message";
 import { getMessages } from "@/actions/get-messages";
+import { sendMessageWithFile } from "@/actions/send-message-with-file";
 import { UIChat, UIMessage } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ import { useUnreadMessageContext } from "@/components/providers/unread-message-p
 import { markMessagesAsRead } from "@/actions/mark-messages-as-read";
 import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
+import PreviewImage from "@/components/modals/preview-image";
+import EmojiPicker from "./emoji-picker";
 
 interface UnreadCounts {
   [senderId: string]: number;
@@ -33,12 +35,16 @@ const Conversation = ({
 }: ConversationProps) => {
   const [realtimeMessages, setRealtimeMessages] = useState<UIMessage[]>([]);
   const [message, setMessage] = useState<string>("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isSending, setIsSending] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const { setUnreadCount } = useUnreadMessageContext();
   const { userId } = useAuth();
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const formatDate = (dateStr: string | Date): string => {
     try {
@@ -67,6 +73,9 @@ const Conversation = ({
       id: msg.id,
       senderId: msg.senderId,
       text: msg.content,
+      filePath: msg.filePath,
+      originalFileName: msg.originalFileName,
+      fileType: msg.fileType,
       time: msg.createdAt ? formatDate(msg.createdAt) : "now",
       isFromCurrentUser: msg.senderId === userId,
       isRead: msg.isRead,
@@ -85,7 +94,10 @@ const Conversation = ({
       (data: {
         messageId: string;
         senderId: string;
-        content: string;
+        content: string | null;
+        filePath: string | null;
+        originalFileName: string | null;
+        fileType: string | null;
         createdAt: string;
       }) => {
         if (data.senderId === selectedChat.recipientId) {
@@ -93,6 +105,9 @@ const Conversation = ({
             id: data.messageId,
             senderId: data.senderId,
             text: data.content,
+            filePath: data.filePath,
+            originalFileName: data.originalFileName,
+            fileType: data.fileType,
             time: formatDate(data.createdAt),
             isFromCurrentUser: false,
             isRead: false,
@@ -173,7 +188,7 @@ const Conversation = ({
   }, [realtimeMessages]);
 
   const onSendMessageHandler = async () => {
-    if (message.trim() && userId && selectedChat && !isSending) {
+    if ((message.trim() || selectedFile) && userId && selectedChat && !isSending) {
       const tempId = `temp-${Date.now()}`;
       const messageText = message.trim();
       const currentTime = formatDate(new Date());
@@ -183,7 +198,10 @@ const Conversation = ({
       const newMessage = {
         id: tempId,
         senderId: userId,
-        text: messageText,
+        text: messageText || null,
+        filePath: selectedFile ? URL.createObjectURL(selectedFile) : undefined,
+        originalFileName: selectedFile ? selectedFile.name : undefined,
+        fileType: selectedFile ? selectedFile.type : undefined,
         time: currentTime,
         isFromCurrentUser: true,
         isPending: true,
@@ -192,13 +210,19 @@ const Conversation = ({
 
       setRealtimeMessages((prev) => [...prev, newMessage]);
       setMessage("");
+      setSelectedFile(null);
+
+      const formData = new FormData();
+      formData.append("recipientId", selectedChat.recipientId);
+      if (messageText) {
+        formData.append("content", messageText);
+      }
+      if (selectedFile) {
+        formData.append("file", selectedFile);
+      }
 
       try {
-        const result = await sendMessage({
-          recipientId: selectedChat.recipientId,
-          content: messageText,
-        });
-
+        const result = await sendMessageWithFile(formData);
         if (result.error) {
           throw new Error(result.error);
         }
@@ -210,6 +234,9 @@ const Conversation = ({
               ? {
                   ...msg,
                   id: serverMessage?.id ?? tempId,
+                  filePath: serverMessage?.filePath ?? msg.filePath,
+                  originalFileName: serverMessage?.originalFileName ?? msg.originalFileName,
+                  fileType: serverMessage?.fileType ?? msg.fileType,
                   isPending: false,
                   isRead: serverMessage?.isRead ?? false,
                 }
@@ -228,6 +255,14 @@ const Conversation = ({
       }
 
       scrollToBottom();
+    }
+  };
+
+  const handleEmojiSelect = (emoji: string) => {
+    setMessage((prev) => prev + emoji);
+    setShowEmojiPicker(false);
+    if (inputRef.current) {
+      inputRef.current.focus();
     }
   };
 
@@ -253,16 +288,23 @@ const Conversation = ({
     }
   }, [selectedChat?.recipientId, userId, setUnreadCounts]);
 
-  const lastSentMessageIndex = realtimeMessages
-    .slice()
-    .reverse()
-    .findIndex(
-      (msg) => msg.isFromCurrentUser && !msg.isPending && !msg.error
-    );
-  const lastSentMessageId =
-    lastSentMessageIndex !== -1
-      ? realtimeMessages[realtimeMessages.length - 1 - lastSentMessageIndex].id
-      : null;
+  // Find the last read and last sent message IDs
+  const { lastReadMessageId, lastSentMessageId } = (() => {
+    // Filter messages sent by the current user, excluding pending or errored messages
+    const sentMessages = realtimeMessages
+      .filter((msg) => msg.isFromCurrentUser && !msg.isPending && !msg.error)
+      .reverse(); // Reverse to start from the newest message
+
+    // Find the last read message
+    const lastReadMessage = sentMessages.find((msg) => msg.isRead);
+    const lastReadMessageId = lastReadMessage ? lastReadMessage.id : null;
+
+    // Find the last sent message
+    const lastSentMessage = sentMessages[0]; // First in reversed array is the newest
+    const lastSentMessageId = lastSentMessage ? lastSentMessage.id : null;
+
+    return { lastReadMessageId, lastSentMessageId };
+  })();
 
   if (!selectedChat) {
     return (
@@ -310,7 +352,29 @@ const Conversation = ({
                           : "bg-white text-gray-800 rounded-bl-none shadow-sm"
                       }`}
                     >
-                      <p>{msg.text}</p>
+                      {msg.text && <p>{msg.text}</p>}
+                      {msg.filePath && msg.fileType && (
+                        <div className="mt-2">
+                          {msg.fileType.startsWith("image/") ? (
+                            <Image
+                              src={msg.filePath}
+                              alt={msg.originalFileName || "Attached image"}
+                              width={200}
+                              height={200}
+                              className="rounded cursor-pointer"
+                              onClick={() => setSelectedImage(msg.filePath!)}
+                            />
+                          ) : (
+                            <a
+                              href={msg.filePath}
+                              download={msg.originalFileName}
+                              className="text-blue-300 underline hover:text-black"
+                            >
+                              {msg.originalFileName || "Download file"}
+                            </a>
+                          )}
+                        </div>
+                      )}
                       <div
                         className={`text-xs mt-1 flex items-center ${
                           msg.isFromCurrentUser
@@ -323,7 +387,7 @@ const Conversation = ({
                           <>
                             {msg.isPending && (
                               <span className="ml-2 text-blue-100">
-                                Sending...
+                                {msg.filePath ? "Uploading..." : "Sending..."}
                               </span>
                             )}
                             {!msg.isPending && msg.error && (
@@ -331,12 +395,11 @@ const Conversation = ({
                                 Failed to send
                               </span>
                             )}
-                            {!msg.isPending &&
-                              !msg.error &&
-                              msg.id === lastSentMessageId && (
-                                <span className="ml-2 flex items-center">
-                                  {msg.isRead ? (
-                                    selectedChat.recipientPhoto ? (
+                            {!msg.isPending && !msg.error && (
+                              <>
+                                {msg.id === lastReadMessageId && msg.isRead && (
+                                  <span className="ml-2 flex items-center">
+                                    {selectedChat.recipientPhoto ? (
                                       <Image
                                         src={selectedChat.recipientPhoto}
                                         alt="Seen"
@@ -349,15 +412,19 @@ const Conversation = ({
                                         size={16}
                                         className="text-blue-100"
                                       />
-                                    )
-                                  ) : (
+                                    )}
+                                  </span>
+                                )}
+                                {msg.id === lastSentMessageId && !msg.isRead && (
+                                  <span className="ml-2 flex items-center">
                                     <Check
                                       size={16}
                                       className="text-blue-100"
                                     />
-                                  )}
-                                </span>
-                              )}
+                                  </span>
+                                )}
+                              </>
+                            )}
                           </>
                         )}
                       </div>
@@ -370,6 +437,50 @@ const Conversation = ({
           )}
         </CardContent>
       </Card>
+      {selectedFile && (
+        <div
+          className="absolute bottom-16 p-2 bg-white rounded-lg shadow-lg flex items-center justify-between z-10"
+          style={{ transform: "translateY(8px)" }}
+        >
+          {selectedFile.type.startsWith("image/") ? (
+            <div className="flex items-center">
+              <Image
+                src={URL.createObjectURL(selectedFile)}
+                alt={selectedFile.name}
+                width={50}
+                height={50}
+                className="rounded object-cover"
+              />
+              <span className="ml-2 text-sm text-gray-700">
+                {selectedFile.name}
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center">
+              <FileText size={20} className="text-gray-500" />
+              <span className="ml-2 text-sm text-gray-700">
+                {selectedFile.name}
+              </span>
+            </div>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-gray-500 hover:bg-gray-200"
+            onClick={() => setSelectedFile(null)}
+            aria-label="Remove file"
+          >
+            <X size={20} />
+          </Button>
+        </div>
+      )}
+      {selectedImage && (
+        <PreviewImage
+          src={selectedImage}
+          alt="Full-size chat image"
+          onClose={() => setSelectedImage(null)}
+        />
+      )}
       <Card className="bg-white border-t border-none">
         <CardContent className="p-3">
           <div className="flex items-center gap-2">
@@ -378,6 +489,12 @@ const Conversation = ({
                 variant="ghost"
                 size="icon"
                 className="text-gray-500 hover:bg-gray-100"
+                onClick={() => {
+                  if (fileInputRef.current) {
+                    fileInputRef.current.accept = "image/*";
+                    fileInputRef.current.click();
+                  }
+                }}
                 aria-label="Attach image"
               >
                 <ImageIcon size={20} />
@@ -386,29 +503,62 @@ const Conversation = ({
                 variant="ghost"
                 size="icon"
                 className="text-gray-500 hover:bg-gray-100"
+                onClick={() => {
+                  if (fileInputRef.current) {
+                    fileInputRef.current.accept = "*";
+                    fileInputRef.current.click();
+                  }
+                }}
                 aria-label="Attach file"
               >
                 <FileText size={20} />
               </Button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    setSelectedFile(e.target.files[0]);
+                  }
+                }}
+              />
             </div>
-            <Input
-              placeholder="Write your message..."
-              ref={inputRef}
-              value={message}
-              className="flex-1 bg-gray-100 border-0"
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  onSendMessageHandler();
-                }
-              }}
-              disabled={isSending}
-            />
+            <div className="relative flex-1">
+              <Input
+                placeholder="Write your message..."
+                ref={inputRef}
+                value={message}
+                className="flex-1 bg-gray-100 border-0 pr-10"
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    onSendMessageHandler();
+                  }
+                }}
+                disabled={isSending}
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:bg-gray-200"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                aria-label="Toggle emoji picker"
+              >
+                <Smile size={20} />
+              </Button>
+              {showEmojiPicker && (
+                <EmojiPicker
+                  onEmojiSelect={handleEmojiSelect}
+                  onClose={() => setShowEmojiPicker(false)}
+                />
+              )}
+            </div>
             <Button
               onClick={onSendMessageHandler}
               className="bg-blue-500 hover:bg-blue-600 rounded-full h-10 w-10 p-0 flex items-center justify-center"
-              disabled={!message.trim() || isSending}
+              disabled={!message.trim() && !selectedFile || isSending}
               aria-label="Send message"
             >
               <Send size={18} />

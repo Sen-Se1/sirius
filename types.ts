@@ -34,7 +34,10 @@ export interface UIChat {
 export interface UIMessage {
   id: string;
   senderId: string;
-  text: string;
+  text: string | null;
+  filePath?: string | null;
+  originalFileName?: string | null;
+  fileType?: string | null;
   time: string;
   isFromCurrentUser: boolean;
   isPending?: boolean;
