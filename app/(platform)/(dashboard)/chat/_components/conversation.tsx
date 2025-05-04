@@ -58,6 +58,7 @@ const Conversation = ({
   const [showMenu, setShowMenu] = useState<{ [key: string]: boolean }>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<{ [key: string]: HTMLDivElement }>({});
+  const scrollAreaRef = useRef<HTMLDivElement>(null); // Ref for the content div inside ScrollArea
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { setUnreadCount } = useUnreadMessageContext();
@@ -75,6 +76,20 @@ const Conversation = ({
       console.error("Error formatting date:", error);
       return "now";
     }
+  };
+
+  const isAtBottom = () => {
+    if (!scrollAreaRef.current) return false;
+    const viewport = scrollAreaRef.current.parentElement;
+    if (!viewport) return false;
+    const { scrollTop, clientHeight, scrollHeight } = viewport;
+    return scrollTop + clientHeight >= scrollHeight - 100; // 100px threshold
+  };
+
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
   };
 
   const fetchMessages = async (recipientId: string): Promise<UIMessage[]> => {
@@ -135,7 +150,9 @@ const Conversation = ({
             setRealtimeMessages(updatedMessages);
             return updatedMessages;
           });
-          scrollToBottom();
+          if (isAtBottom()) {
+            scrollToBottom();
+          }
           markMessagesAsRead({ senderId: data.senderId }).then((result) => {
             if (result.data) {
               setUnreadCount(result.data.newUnreadCount);
@@ -170,6 +187,7 @@ const Conversation = ({
         setRealtimeMessages(updatedMessages);
         return updatedMessages;
       });
+      // No scrollToBottom here to keep user at current position
     });
 
     return () => {
@@ -186,7 +204,7 @@ const Conversation = ({
       fetchMessages(selectedChat.recipientId).then((formattedMessages) => {
         setLocalRealtimeMessages(formattedMessages);
         setRealtimeMessages(formattedMessages);
-        scrollToBottom();
+        scrollToBottom(); // Scroll to bottom after fetching messages
         markMessagesAsRead({ senderId: selectedChat.recipientId }).then(
           (result) => {
             if (result.data) {
@@ -207,16 +225,6 @@ const Conversation = ({
       inputRef.current.focus();
     }
   }, [selectedChat]);
-
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [realtimeMessages]);
 
   useEffect(() => {
     if (highlightedMessageId && messageRefs.current[highlightedMessageId]) {
@@ -292,6 +300,7 @@ const Conversation = ({
           setRealtimeMessages(updatedMessages);
           return updatedMessages;
         });
+        scrollToBottom(); // Scroll to bottom after sending a message
       } catch (error) {
         console.error("Error sending message:", error);
         setLocalRealtimeMessages((prev) => {
@@ -304,8 +313,6 @@ const Conversation = ({
       } finally {
         setIsSending(false);
       }
-
-      scrollToBottom();
     }
   };
 
@@ -339,28 +346,22 @@ const Conversation = ({
     }
   }, [selectedChat?.recipientId, userId, setUnreadCounts]);
 
-  // Find the last read and last sent message IDs
   const { lastReadMessageId, lastSentMessageId } = (() => {
-    // Filter messages sent by the current user, excluding pending or errored messages
     const sentMessages = realtimeMessages
       .filter((msg) => msg.isFromCurrentUser && !msg.isPending && !msg.error)
-      .reverse(); // Reverse to start from the newest message
-
-    // Find the last read message
+      .reverse();
     const lastReadMessage = sentMessages.find((msg) => msg.isRead);
-    const lastReadMessageId = lastReadMessage ? lastReadMessage.id : null;
-
-    // Find the last sent message
-    const lastSentMessage = sentMessages[0]; // First in reversed array is the newest
-    const lastSentMessageId = lastSentMessage ? lastSentMessage.id : null;
-
-    return { lastReadMessageId, lastSentMessageId };
+    const lastSentMessage = sentMessages[0];
+    return {
+      lastReadMessageId: lastReadMessage ? lastReadMessage.id : null,
+      lastSentMessageId: lastSentMessage ? lastSentMessage.id : null,
+    };
   })();
 
   const handleMenuToggle = (msgId: string) => {
     setShowMenu((prev) => ({
       ...prev,
-      [msgId]: !prev[msgId], // Toggle the menu state
+      [msgId]: !prev[msgId],
     }));
   };
 
@@ -380,6 +381,7 @@ const Conversation = ({
       console.error("Error deleting message:", error);
     }
     setShowMenu((prev) => ({ ...prev, [msgId]: false }));
+    // No scrollToBottom here to keep user at current position
   };
 
   const handleEdit = (msgId: string) => {
@@ -425,7 +427,7 @@ const Conversation = ({
             </div>
           ) : (
             <ScrollArea className="h-[calc(100vh-240px)]">
-              <div className="space-y-4 p-4">
+              <div ref={scrollAreaRef} className="space-y-4 p-4">
                 {realtimeMessages.map((msg) => (
                   <div
                     key={msg.id}
