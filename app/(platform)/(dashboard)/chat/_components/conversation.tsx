@@ -384,7 +384,7 @@ const Conversation = ({
                     onClick={() => setHighlightedMessageId(null)}
                   >
                     <div
-                      className={`max-w-[75%] rounded-lg p-3 cursor-pointer ${
+                      className={`min-w-[10%] max-w-[75%] rounded-lg p-3 cursor-pointer ${
                         msg.isFromCurrentUser
                           ? "bg-blue-500 text-white rounded-br-none"
                           : "bg-white text-gray-800 rounded-bl-none shadow-sm"
@@ -396,23 +396,27 @@ const Conversation = ({
                           : ""
                       }`}
                     >
-                      {msg.text && <p className="max-w-[600px] break-words">{msg.text}</p>}
+                      {msg.text && <p className="max-w-[600px] break-words whitespace-pre-wrap">{msg.text}</p>}
                       {msg.filePath && msg.fileType && (
-                        <div className="mx-[-9px]">
+                        <div className="mx-[-9px] mt-2">
                           {msg.fileType.startsWith("image/") ? (
                             <Image
                               src={msg.filePath}
                               alt={msg.originalFileName || "Attached image"}
                               width={490}
                               height={490}
-                              className="rounded cursor-pointer"
+                              className="rounded cursor-pointer max-w-full h-auto"
                               onClick={() => setSelectedImage(msg.filePath!)}
                             />
                           ) : (
                             <a
                               href={msg.filePath}
                               download={msg.originalFileName}
-                              className="text-blue-300 underline mt-2 mx-[9px] hover:text-black"
+                              className={`${
+                                msg.isFromCurrentUser
+                                  ? "text-blue-100 hover:text-blue-200"
+                                  : "text-blue-500 hover:text-blue-600"
+                              } underline mx-[9px]`}
                             >
                               {msg.originalFileName || "Download file"}
                             </a>
