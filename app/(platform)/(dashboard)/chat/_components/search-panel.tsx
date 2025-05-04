@@ -123,7 +123,7 @@ export default function SearchPanel({
           </div>
           {searchTerm && !hasSearched && (
             <p className="text-center text-gray-500 text-sm mb-2">
-              Press "Enter" to search.
+              Press &quot;Enter&quot; to search.
             </p>
           )}
           {searchTerm && hasSearched && (
