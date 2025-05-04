@@ -5,7 +5,7 @@ import Sidebar from "./_components/sidebar";
 import ChatList from "./_components/chat-list";
 import ChatHeader from "./_components/chat-header";
 import Conversation from "./_components/conversation";
-import { UIChat } from "@/types";
+import { UIChat, UIMessage } from "@/types";
 import ProfilePanel from "./_components/profile-panel";
 import SearchPanel from "./_components/search-panel";
 import { getUnreadCountsPerSender } from "@/actions/get-unread-counts-per-sender";
@@ -20,6 +20,8 @@ export default function Chat() {
   const [showProfile, setShowProfile] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [unreadCounts, setUnreadCounts] = useState<UnreadCounts>({});
+  const [realtimeMessages, setRealtimeMessages] = useState<UIMessage[]>([]);
+  const [searchResults, setSearchResults] = useState<UIMessage[]>([]);
 
   useEffect(() => {
     const fetchUnreadCounts = async () => {
@@ -59,6 +61,8 @@ export default function Chat() {
                 selectedChat={selectedChat}
                 showProfile={showProfile}
                 setUnreadCounts={setUnreadCounts}
+                realtimeMessages={searchResults.length > 0 ? searchResults : undefined}
+                setRealtimeMessages={setRealtimeMessages}
               />
               <div
                 className={`transition-all duration-300 ease-in-out overflow-hidden ${
@@ -70,6 +74,8 @@ export default function Chat() {
                     setShowSearch={setShowSearch}
                     setShowProfile={setShowProfile}
                     isVisible={showSearch}
+                    realtimeMessages={realtimeMessages}
+                    setSearchResults={setSearchResults}
                   />
                 ) : (
                   <ProfilePanel

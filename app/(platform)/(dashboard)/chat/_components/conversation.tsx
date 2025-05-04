@@ -26,14 +26,18 @@ interface ConversationProps {
   selectedChat?: UIChat;
   showProfile?: boolean;
   setUnreadCounts: React.Dispatch<React.SetStateAction<UnreadCounts>>;
+  realtimeMessages?: UIMessage[];
+  setRealtimeMessages: React.Dispatch<React.SetStateAction<UIMessage[]>>;
 }
 
 const Conversation = ({
   selectedChat,
   showProfile = false,
   setUnreadCounts,
+  realtimeMessages: propRealtimeMessages,
+  setRealtimeMessages,
 }: ConversationProps) => {
-  const [realtimeMessages, setRealtimeMessages] = useState<UIMessage[]>([]);
+  const [realtimeMessages, setLocalRealtimeMessages] = useState<UIMessage[]>(propRealtimeMessages || []);
   const [message, setMessage] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -112,9 +116,11 @@ const Conversation = ({
             isFromCurrentUser: false,
             isRead: false,
           };
-          setRealtimeMessages((prev) => {
+          setLocalRealtimeMessages((prev) => {
             if (prev.some((msg) => msg.id === newMessage.id)) return prev;
-            return [...prev, newMessage];
+            const updatedMessages = [...prev, newMessage];
+            setRealtimeMessages(updatedMessages);
+            return updatedMessages;
           });
           scrollToBottom();
           markMessagesAsRead({ senderId: data.senderId }).then((result) => {
@@ -134,11 +140,13 @@ const Conversation = ({
       "message-read",
       (data: { messageIds: string[]; senderId: string }) => {
         if (data.senderId === selectedChat.recipientId) {
-          setRealtimeMessages((prev) =>
-            prev.map((msg) =>
+          setLocalRealtimeMessages((prev) => {
+            const updatedMessages = prev.map((msg) =>
               data.messageIds.includes(msg.id) ? { ...msg, isRead: true } : msg
-            )
-          );
+            );
+            setRealtimeMessages(updatedMessages);
+            return updatedMessages;
+          });
         }
       }
     );
@@ -152,8 +160,9 @@ const Conversation = ({
 
   useEffect(() => {
     if (selectedChat && userId) {
-      setRealtimeMessages([]);
+      setLocalRealtimeMessages([]);
       fetchMessages(selectedChat.recipientId).then((formattedMessages) => {
+        setLocalRealtimeMessages(formattedMessages);
         setRealtimeMessages(formattedMessages);
         scrollToBottom();
         markMessagesAsRead({ senderId: selectedChat.recipientId }).then(
@@ -208,7 +217,11 @@ const Conversation = ({
         isRead: false,
       };
 
-      setRealtimeMessages((prev) => [...prev, newMessage]);
+      setLocalRealtimeMessages((prev) => {
+        const updatedMessages = [...prev, newMessage];
+        setRealtimeMessages(updatedMessages);
+        return updatedMessages;
+      });
       setMessage("");
       setSelectedFile(null);
 
@@ -228,8 +241,8 @@ const Conversation = ({
         }
 
         const serverMessage = result.data?.message;
-        setRealtimeMessages((prev) =>
-          prev.map((msg) =>
+        setLocalRealtimeMessages((prev) => {
+          const updatedMessages = prev.map((msg) =>
             msg.id === tempId
               ? {
                   ...msg,
@@ -241,15 +254,19 @@ const Conversation = ({
                   isRead: serverMessage?.isRead ?? false,
                 }
               : msg
-          )
-        );
+          );
+          setRealtimeMessages(updatedMessages);
+          return updatedMessages;
+        });
       } catch (error) {
         console.error("Error sending message:", error);
-        setRealtimeMessages((prev) =>
-          prev.map((msg) =>
+        setLocalRealtimeMessages((prev) => {
+          const updatedMessages = prev.map((msg) =>
             msg.id === tempId ? { ...msg, isPending: false, error: true } : msg
-          )
-        );
+          );
+          setRealtimeMessages(updatedMessages);
+          return updatedMessages;
+        });
       } finally {
         setIsSending(false);
       }
