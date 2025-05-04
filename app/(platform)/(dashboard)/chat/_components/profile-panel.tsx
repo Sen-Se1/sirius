@@ -153,10 +153,20 @@ export default function ProfilePanel({
       }
     );
 
+    channel.bind("message-deleted", (data: { messageId: string }) => {
+      console.log("Received Pusher message-deleted:", { messageId: data.messageId });
+      setSharedFiles((prev) => {
+        const updatedFiles = prev.filter((file) => file.id !== data.messageId);
+        console.log("Updated shared files after deletion:", updatedFiles);
+        return updatedFiles;
+      });
+    });
+
     return () => {
       console.log(`Unsubscribing from Pusher channel: user-${userId}`);
       pusherClient.unsubscribe(`user-${userId}`);
       pusherClient.unbind("new-message");
+      pusherClient.unbind("message-deleted");
     };
   }, [userId, selectedChatData.recipientId]);
 

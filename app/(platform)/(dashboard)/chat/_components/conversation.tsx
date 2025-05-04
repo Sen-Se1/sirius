@@ -6,6 +6,7 @@ import { Send, ImageIcon, FileText, Check, CheckCheck, X, Smile, MoreVertical } 
 import { pusherClient } from "@/lib/pusher";
 import { getMessages } from "@/actions/get-messages";
 import { sendMessageWithFile } from "@/actions/send-message-with-file";
+import { deleteMessage } from "@/actions/delete-message";
 import { UIChat, UIMessage } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -163,10 +164,19 @@ const Conversation = ({
       }
     );
 
+    channel.bind("message-deleted", (data: { messageId: string }) => {
+      setLocalRealtimeMessages((prev) => {
+        const updatedMessages = prev.filter((msg) => msg.id !== data.messageId);
+        setRealtimeMessages(updatedMessages);
+        return updatedMessages;
+      });
+    });
+
     return () => {
       pusherClient.unsubscribe(`user-${userId}`);
       pusherClient.unbind("new-message");
       pusherClient.unbind("message-read");
+      pusherClient.unbind("message-deleted");
     };
   }, [userId, selectedChat?.recipientId]);
 
@@ -354,11 +364,22 @@ const Conversation = ({
     }));
   };
 
-  const handleDelete = (msgId: string) => {
-    setLocalRealtimeMessages((prev) => prev.filter((msg) => msg.id !== msgId));
-    setRealtimeMessages((prev) => prev.filter((msg) => msg.id !== msgId));
+  const handleDelete = async (msgId: string) => {
+    try {
+      const result = await deleteMessage({ messageId: msgId });
+      if (result.error) {
+        console.error(result.error);
+      } else {
+        setLocalRealtimeMessages((prev) => {
+          const updatedMessages = prev.filter((msg) => msg.id !== msgId);
+          setRealtimeMessages(updatedMessages);
+          return updatedMessages;
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting message:", error);
+    }
     setShowMenu((prev) => ({ ...prev, [msgId]: false }));
-    // Add API call to delete message on server if needed
   };
 
   const handleEdit = (msgId: string) => {
