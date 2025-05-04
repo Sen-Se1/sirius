@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Send, ImageIcon, FileText, Check, CheckCheck, X, Smile } from "lucide-react";
+import { Send, ImageIcon, FileText, Check, CheckCheck, X, Smile, MoreVertical } from "lucide-react";
 import { pusherClient } from "@/lib/pusher";
 import { getMessages } from "@/actions/get-messages";
 import { sendMessageWithFile } from "@/actions/send-message-with-file";
@@ -17,6 +17,12 @@ import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
 import PreviewImage from "@/components/modals/preview-image";
 import EmojiPicker from "./emoji-picker";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface UnreadCounts {
   [senderId: string]: number;
@@ -48,6 +54,7 @@ const Conversation = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showMenu, setShowMenu] = useState<{ [key: string]: boolean }>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<{ [key: string]: HTMLDivElement }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -340,6 +347,32 @@ const Conversation = ({
     return { lastReadMessageId, lastSentMessageId };
   })();
 
+  const handleMenuToggle = (msgId: string) => {
+    setShowMenu((prev) => ({
+      ...prev,
+      [msgId]: !prev[msgId], // Toggle the menu state
+    }));
+  };
+
+  const handleDelete = (msgId: string) => {
+    setLocalRealtimeMessages((prev) => prev.filter((msg) => msg.id !== msgId));
+    setRealtimeMessages((prev) => prev.filter((msg) => msg.id !== msgId));
+    setShowMenu((prev) => ({ ...prev, [msgId]: false }));
+    // Add API call to delete message on server if needed
+  };
+
+  const handleEdit = (msgId: string) => {
+    const msg = realtimeMessages.find((m) => m.id === msgId);
+    if (msg && msg.text) {
+      setMessage(msg.text);
+      setLocalRealtimeMessages((prev) =>
+        prev.map((m) => (m.id === msgId ? { ...m, isEditing: true } : m))
+      );
+      setShowMenu((prev) => ({ ...prev, [msgId]: false }));
+    }
+    // Add logic to save edited message if needed
+  };
+
   if (!selectedChat) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-100">
@@ -380,11 +413,11 @@ const Conversation = ({
                     }}
                     className={`flex ${
                       msg.isFromCurrentUser ? "justify-end" : "justify-start"
-                    }`}
+                    } group`}
                     onClick={() => setHighlightedMessageId(null)}
                   >
                     <div
-                      className={`min-w-[10%] max-w-[75%] rounded-lg p-3 cursor-pointer ${
+                      className={`min-w-[10%] max-w-[75%] rounded-lg p-3 cursor-pointer relative ${
                         msg.isFromCurrentUser
                           ? "bg-blue-500 text-white rounded-br-none"
                           : "bg-white text-gray-800 rounded-bl-none shadow-sm"
@@ -396,6 +429,29 @@ const Conversation = ({
                           : ""
                       }`}
                     >
+                      {msg.isFromCurrentUser && (
+                        <DropdownMenu open={showMenu[msg.id]} onOpenChange={() => handleMenuToggle(msg.id)}>
+                          <DropdownMenuTrigger asChild>
+                            <div
+                              className="absolute left-[-35px] top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleMenuToggle(msg.id);
+                              }}
+                            >
+                              <MoreVertical size={16} className="text-blue-500 cursor-pointer" />
+                            </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-32">
+                            <DropdownMenuItem onClick={() => handleEdit(msg.id)}>
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDelete(msg.id)} className="text-red-600">
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                       {msg.text && <p className="max-w-[600px] break-words whitespace-pre-wrap">{msg.text}</p>}
                       {msg.filePath && msg.fileType && (
                         <div className="mx-[-9px] mt-2">
