@@ -238,6 +238,9 @@ const Conversation = ({
       });
       setMessage("");
       setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
 
       const formData = new FormData();
       formData.append("recipientId", selectedChat.recipientId);
@@ -508,7 +511,12 @@ const Conversation = ({
             variant="ghost"
             size="icon"
             className="text-gray-500 hover:bg-gray-200"
-            onClick={() => setSelectedFile(null)}
+            onClick={() => {
+              setSelectedFile(null);
+              if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+              }
+            }}
             aria-label="Remove file"
           >
             <X size={20} />
