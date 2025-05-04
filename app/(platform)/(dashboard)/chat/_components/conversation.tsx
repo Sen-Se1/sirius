@@ -396,15 +396,15 @@ const Conversation = ({
                           : ""
                       }`}
                     >
-                      {msg.text && <p>{msg.text}</p>}
+                      {msg.text && <p className="max-w-[600px] break-words">{msg.text}</p>}
                       {msg.filePath && msg.fileType && (
-                        <div className="mt-2">
+                        <div className="mx-[-9px]">
                           {msg.fileType.startsWith("image/") ? (
                             <Image
                               src={msg.filePath}
                               alt={msg.originalFileName || "Attached image"}
-                              width={200}
-                              height={200}
+                              width={490}
+                              height={490}
                               className="rounded cursor-pointer"
                               onClick={() => setSelectedImage(msg.filePath!)}
                             />
@@ -412,7 +412,7 @@ const Conversation = ({
                             <a
                               href={msg.filePath}
                               download={msg.originalFileName}
-                              className="text-blue-300 underline hover:text-black"
+                              className="text-blue-300 underline mt-2 mx-[9px] hover:text-black"
                             >
                               {msg.originalFileName || "Download file"}
                             </a>
