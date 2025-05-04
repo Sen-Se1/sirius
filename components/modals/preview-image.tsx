@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { X } from "lucide-react";
+import { Download, X } from "lucide-react";
 import Image from "next/image";
 import { Button } from "../ui/button";
 
@@ -28,6 +28,15 @@ export default function PreviewImage({
     }
   };
 
+  const handleDownload = () => {
+    const link = document.createElement("a");
+    link.href = src;
+    link.download = alt || "downloaded_image.jpg";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div
       className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50"
@@ -40,6 +49,13 @@ export default function PreviewImage({
           onClick={onClose}
         >
           <X size={24} />
+        </Button>
+        <Button
+          className="absolute top-[-50px] right-[0px] bg-white/80 hover:bg-white text-gray-700 hover:text-gray-900 rounded-full p-2"
+          aria-label="Download image"
+          onClick={handleDownload}
+        >
+          <Download size={24} />
         </Button>
         <Image
           src={src}
