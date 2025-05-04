@@ -13,15 +13,22 @@ interface SearchPanelProps {
   setSearchResults: (results: UIMessage[]) => void;
 }
 
-export default function SearchPanel({ setShowSearch, setShowProfile, isVisible = true, realtimeMessages, setSearchResults }: SearchPanelProps) {
+export default function SearchPanel({
+  setShowSearch,
+  setShowProfile,
+  isVisible = true,
+  realtimeMessages,
+  setSearchResults,
+}: SearchPanelProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setLocalSearchResults] = useState<UIMessage[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
 
   const handleSearch = () => {
     if (searchTerm.trim()) {
-      const results = realtimeMessages.filter((msg) =>
-        msg.text?.toLowerCase().includes(searchTerm.toLowerCase()) || false
+      const results = realtimeMessages.filter(
+        (msg) =>
+          msg.text?.toLowerCase().includes(searchTerm.toLowerCase()) || false
       );
       setLocalSearchResults(results);
       setSearchResults(results);
@@ -51,7 +58,7 @@ export default function SearchPanel({ setShowSearch, setShowProfile, isVisible =
 
   return (
     <div
-      className={`h-[80px] transition-opacity duration-300 border-l-2 ${
+      className={`h-[80px] transition-opacity duration-300 ${
         isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
     >
@@ -74,7 +81,7 @@ export default function SearchPanel({ setShowSearch, setShowProfile, isVisible =
           </div>
           <div className="w-10" />
         </div>
-        <div className="p-4 flex-1 flex flex-col">
+        <div className="p-4 flex-1 flex flex-col ">
           <div className="relative w-full mb-2">
             <Input
               type="text"
@@ -106,13 +113,15 @@ export default function SearchPanel({ setShowSearch, setShowProfile, isVisible =
             )}
           </div>
           {searchTerm && !hasSearched && (
-            <p className="text-center text-gray-500 text-sm mb-2">Press "Enter" to search.</p>
+            <p className="text-center text-gray-500 text-sm mb-2">
+              Press "Enter" to search.
+            </p>
           )}
           {searchTerm && hasSearched && (
-            <ScrollArea className="h-[calc(100vh-160px)]">
+            <ScrollArea className="py-2 h-[calc(100vh-240px)]">
               <div className="space-y-4 p-2">
                 {searchResults.length > 0 ? (
-                  searchResults.map((msg) => (
+                  [...searchResults].reverse().map((msg) => (
                     <div
                       key={msg.id}
                       className={`p-2 rounded-lg ${

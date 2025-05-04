@@ -166,7 +166,7 @@ export default function ProfilePanel({
         isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
     >
-      <div className="w-full md:w-80 bg-white border-l">
+      <div className="w-full md:w-80 bg-white">
         <div className="p-4 border-b">
           <div className="flex flex-col items-center">
             <div className="w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden mb-4">

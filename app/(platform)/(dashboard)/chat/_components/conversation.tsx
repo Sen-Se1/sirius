@@ -333,7 +333,7 @@ const Conversation = ({
 
   return (
     <div
-      className={`flex-1 flex flex-col ${
+      className={`flex-1 flex flex-col border-r-2 ${
         showProfile ? "md:w-[calc(100%-20rem)]" : "w-full"
       }`}
     >
