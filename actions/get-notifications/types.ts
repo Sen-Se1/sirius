@@ -7,7 +7,5 @@ export type InputType = z.infer<typeof GetNotificationsSchema>;
 
 export type ReturnType = ActionState<
   InputType,
-  {
-    notifications: Notification[];
-  }
+  { notifications: Notification[] }
 >;

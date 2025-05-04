@@ -4,9 +4,4 @@ import { GetBoardIdFromCard } from "./schema";
 
 export type InputType = z.infer<typeof GetBoardIdFromCard>;
 
-export type ReturnType = ActionState<
-  InputType,
-  {
-    boardId: string;
-  }
->;
+export type ReturnType = ActionState<InputType, { boardId: string }>;

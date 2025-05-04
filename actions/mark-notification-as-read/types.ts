@@ -4,9 +4,4 @@ import { MarkNotificationAsReadSchema } from "./schema";
 
 export type InputType = z.infer<typeof MarkNotificationAsReadSchema>;
 
-export type ReturnType = ActionState<
-  InputType,
-  {
-    success: boolean;
-  }
->;
+export type ReturnType = ActionState<InputType, { success: boolean }>;

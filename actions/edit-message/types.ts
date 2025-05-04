@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { ActionState } from "@/lib/create-safe-action";
-import { GetMessages } from "./schema";
+import { EditMessage } from "./schema";
 
-export type InputType = z.infer<typeof GetMessages>;
+export type InputType = z.infer<typeof EditMessage>;
 
 export type ReturnType = ActionState<
   InputType,
   {
-    messages: {
+    message: {
       id: string;
       senderId: string;
       content: string | null;
@@ -16,6 +16,6 @@ export type ReturnType = ActionState<
       fileType: string | null;
       createdAt: Date;
       isRead: boolean;
-    }[];
+    };
   }
 >;

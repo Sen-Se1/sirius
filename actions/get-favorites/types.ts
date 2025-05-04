@@ -7,7 +7,5 @@ export type InputType = z.infer<typeof GetFavorites>;
 
 export type ReturnType = ActionState<
   InputType,
-  {
-    favorites: (Favorite & { board: { title: string } })[];
-  }
+  { favorites: (Favorite & { board: { title: string } })[] }
 >;

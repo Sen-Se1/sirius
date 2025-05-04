@@ -6,7 +6,5 @@ export type InputType = z.infer<typeof CheckCardDeadlines>;
 
 export type ReturnType = ActionState<
   InputType,
-  {
-    notificationsCreated: number;
-  }
+  { notificationsCreated: number }
 >;

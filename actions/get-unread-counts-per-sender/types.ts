@@ -4,7 +4,4 @@ import { GetUnreadCountsPerSender } from "./schema";
 
 export type InputType = z.infer<typeof GetUnreadCountsPerSender>;
 
-export type ReturnType = ActionState<
-  InputType,
-  Record<string, number> // { senderId: unreadCount }
->;
+export type ReturnType = ActionState<InputType, Record<string, number>>; // { senderId: unreadCount }
