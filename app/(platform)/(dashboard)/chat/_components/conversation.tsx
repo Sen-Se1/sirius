@@ -28,6 +28,8 @@ interface ConversationProps {
   setUnreadCounts: React.Dispatch<React.SetStateAction<UnreadCounts>>;
   realtimeMessages?: UIMessage[];
   setRealtimeMessages: React.Dispatch<React.SetStateAction<UIMessage[]>>;
+  highlightedMessageId: string | null;
+  setHighlightedMessageId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const Conversation = ({
@@ -36,6 +38,8 @@ const Conversation = ({
   setUnreadCounts,
   realtimeMessages: propRealtimeMessages,
   setRealtimeMessages,
+  highlightedMessageId,
+  setHighlightedMessageId,
 }: ConversationProps) => {
   const [realtimeMessages, setLocalRealtimeMessages] = useState<UIMessage[]>(propRealtimeMessages || []);
   const [message, setMessage] = useState<string>("");
@@ -45,6 +49,7 @@ const Conversation = ({
   const [isSending, setIsSending] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<{ [key: string]: HTMLDivElement }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { setUnreadCount } = useUnreadMessageContext();
@@ -196,6 +201,15 @@ const Conversation = ({
     scrollToBottom();
   }, [realtimeMessages]);
 
+  useEffect(() => {
+    if (highlightedMessageId && messageRefs.current[highlightedMessageId]) {
+      messageRefs.current[highlightedMessageId].scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [highlightedMessageId]);
+
   const onSendMessageHandler = async () => {
     if ((message.trim() || selectedFile) && userId && selectedChat && !isSending) {
       const tempId = `temp-${Date.now()}`;
@@ -325,7 +339,7 @@ const Conversation = ({
 
   if (!selectedChat) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-50">
+      <div className="flex-1 flex items-center justify-center bg-gray-100">
         <p className="text-gray-500">Select a conversation to start</p>
       </div>
     );
@@ -337,7 +351,7 @@ const Conversation = ({
         showProfile ? "md:w-[calc(100%-20rem)]" : "w-full"
       }`}
     >
-      <Card className="flex-1 bg-gray-50 border-none">
+      <Card className="flex-1 bg-gray-100 border-none">
         <CardContent className="p-4 h-full">
           {isLoading ? (
             <div className="h-full flex items-center justify-center">
@@ -358,15 +372,25 @@ const Conversation = ({
                 {realtimeMessages.map((msg) => (
                   <div
                     key={msg.id}
+                    ref={(el) => {
+                      if (el) messageRefs.current[msg.id] = el;
+                    }}
                     className={`flex ${
                       msg.isFromCurrentUser ? "justify-end" : "justify-start"
                     }`}
+                    onClick={() => setHighlightedMessageId(null)}
                   >
                     <div
-                      className={`max-w-[75%] rounded-lg p-3 ${
+                      className={`max-w-[75%] rounded-lg p-3 cursor-pointer ${
                         msg.isFromCurrentUser
                           ? "bg-blue-500 text-white rounded-br-none"
                           : "bg-white text-gray-800 rounded-bl-none shadow-sm"
+                      } ${
+                        msg.id === highlightedMessageId
+                          ? msg.isFromCurrentUser
+                            ? "border-2 border-blue-900"
+                            : "border-2 border-gray-700"
+                          : ""
                       }`}
                     >
                       {msg.text && <p>{msg.text}</p>}

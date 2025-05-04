@@ -22,6 +22,7 @@ export default function Chat() {
   const [unreadCounts, setUnreadCounts] = useState<UnreadCounts>({});
   const [realtimeMessages, setRealtimeMessages] = useState<UIMessage[]>([]);
   const [searchResults, setSearchResults] = useState<UIMessage[]>([]);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUnreadCounts = async () => {
@@ -32,6 +33,22 @@ export default function Chat() {
     };
     fetchUnreadCounts();
   }, []);
+
+  const handleMessageClick = (messageId: string) => {
+    setHighlightedMessageId(messageId);
+  };
+
+  const handleSearchPerformed = (newSearchTerm: string) => {
+    // Clear highlight if a new search is performed (different search term)
+    if (searchResults.length > 0 && newSearchTerm !== searchResults[0]?.text) {
+      setHighlightedMessageId(null);
+    }
+  };
+
+  const handleInputCleared = () => {
+    // Clear highlight when input is cleared
+    setHighlightedMessageId(null);
+  };
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -63,6 +80,8 @@ export default function Chat() {
                 setUnreadCounts={setUnreadCounts}
                 realtimeMessages={searchResults.length > 0 ? searchResults : undefined}
                 setRealtimeMessages={setRealtimeMessages}
+                highlightedMessageId={highlightedMessageId}
+                setHighlightedMessageId={setHighlightedMessageId}
               />
               <div
                 className={`transition-all duration-300 ease-in-out overflow-hidden ${
@@ -76,6 +95,9 @@ export default function Chat() {
                     isVisible={showSearch}
                     realtimeMessages={realtimeMessages}
                     setSearchResults={setSearchResults}
+                    onMessageClick={handleMessageClick}
+                    onSearchPerformed={handleSearchPerformed}
+                    onInputCleared={handleInputCleared}
                   />
                 ) : (
                   <ProfilePanel

@@ -11,6 +11,9 @@ interface SearchPanelProps {
   isVisible?: boolean;
   realtimeMessages: UIMessage[];
   setSearchResults: (results: UIMessage[]) => void;
+  onMessageClick: (messageId: string) => void;
+  onSearchPerformed: (newSearchTerm: string) => void;
+  onInputCleared: () => void;
 }
 
 export default function SearchPanel({
@@ -19,6 +22,9 @@ export default function SearchPanel({
   isVisible = true,
   realtimeMessages,
   setSearchResults,
+  onMessageClick,
+  onSearchPerformed,
+  onInputCleared,
 }: SearchPanelProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setLocalSearchResults] = useState<UIMessage[]>([]);
@@ -33,6 +39,7 @@ export default function SearchPanel({
       setLocalSearchResults(results);
       setSearchResults(results);
       setHasSearched(true);
+      onSearchPerformed(searchTerm); // Notify of new search
     } else {
       setLocalSearchResults([]);
       setSearchResults([]);
@@ -46,6 +53,7 @@ export default function SearchPanel({
       setLocalSearchResults([]);
       setSearchResults([]);
       setHasSearched(false);
+      onInputCleared(); // Notify of input cleared
     }
   };
 
@@ -54,6 +62,7 @@ export default function SearchPanel({
     setLocalSearchResults([]);
     setSearchResults([]);
     setHasSearched(false);
+    onInputCleared(); // Notify of input cleared
   };
 
   return (
@@ -81,7 +90,7 @@ export default function SearchPanel({
           </div>
           <div className="w-10" />
         </div>
-        <div className="p-4 flex-1 flex flex-col ">
+        <div className="p-4 flex-1 flex flex-col">
           <div className="relative w-full mb-2">
             <Input
               type="text"
@@ -124,11 +133,12 @@ export default function SearchPanel({
                   [...searchResults].reverse().map((msg) => (
                     <div
                       key={msg.id}
-                      className={`p-2 rounded-lg ${
+                      className={`p-2 rounded-lg cursor-pointer hover:bg-gray-200 ${
                         msg.isFromCurrentUser
                           ? "bg-blue-100 text-blue-800"
                           : "bg-gray-100 text-gray-800"
                       }`}
+                      onClick={() => onMessageClick(msg.id)}
                     >
                       <p>{msg.text || "No text"}</p>
                       <p className="text-xs text-gray-500">{msg.time}</p>
