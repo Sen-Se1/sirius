@@ -1,6 +1,6 @@
 "use client";
 
-import { useUnreadMessageContext } from "@/components/providers/unread-message-provider";
+import { useUnreadMessageContext } from "@/components/providers/unread-message-polling-provider";
 import { MessageCircle } from "lucide-react";
 import Link from "next/link";
 

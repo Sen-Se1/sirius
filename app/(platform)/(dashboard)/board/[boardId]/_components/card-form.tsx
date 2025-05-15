@@ -94,7 +94,7 @@ export const CardForm = forwardRef<HTMLTextAreaElement, CardFormProps>(
           />
           <FormInput
             id="dueDate"
-            label="Due Date"
+            label="Due Date (optional)"
             type="date"
             placeholder="Select due date (optional)"
             errors={fieldErrors}

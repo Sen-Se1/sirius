@@ -76,11 +76,43 @@ export const DueDate = ({ data }: DueDateProps) => {
     return date ? date.toLocaleDateString() : "No due date";
   };
 
+  const getDatePart = (date: Date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+
+  // Determine the due date status
+  let status: { className: string; text: string } | null = null;
+  if (dueDate) {
+    const todayPart = getDatePart(new Date());
+    const dueDatePart = getDatePart(dueDate);
+    const tomorrowPart = new Date(todayPart.getTime() + 24 * 60 * 60 * 1000);
+
+    if (dueDatePart.getTime() <= todayPart.getTime()) {
+      // Due date is today or in the past
+      status = {
+        className: "bg-red-500 text-white",
+        text: dueDatePart.getTime() < todayPart.getTime() ? "Overdue" : "Due today",
+      };
+    } else if (dueDatePart.getTime() === tomorrowPart.getTime()) {
+      // Due date is tomorrow
+      status = { className: "bg-yellow-500 text-black", text: "Due tomorrow" };
+    }
+  }
+
   return (
     <div className="flex items-start gap-x-3 w-full">
       <Calendar className="h-5 w-5 mt-0.5 text-neutral-700" />
       <div className="w-full">
-        <p className="font-semibold text-neutral-700 mb-2">Due Date</p>
+        <p className="font-semibold text-neutral-700 mb-2">
+          Due Date
+          {status && (
+            <span className={`px-2 py-1 rounded ml-2 ${status.className}`}>
+              {status.text}
+            </span>
+          )}
+        </p>
         {isEditing ? (
           <form action={onSubmit} ref={formRef} className="space-y-2">
             <input

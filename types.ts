@@ -43,4 +43,5 @@ export interface UIMessage {
   isPending?: boolean;
   error?: boolean;
   isRead?: boolean;
+  isEditing?: boolean;
 }

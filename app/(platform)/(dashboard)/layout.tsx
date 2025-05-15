@@ -3,7 +3,7 @@
 import { getFavorites } from "@/actions/get-favorites";
 import { getNotifications } from "@/actions/get-notifications";
 import { Navbar } from "./_components/navbar";
-import { UnreadMessageProvider } from "@/components/providers/unread-message-provider";
+import { UnreadMessagePollingProvider } from "@/components/providers/unread-message-polling-provider";
 import { NotificationProvider } from "@/components/providers/notification-provider";
 import { getUnreadMessageCount } from "@/actions/get-unread-message-count";
 
@@ -24,14 +24,14 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   const initialNotifications = notificationsResult.data.notifications;
 
   return (
-    <UnreadMessageProvider initialCount={initialUnreadCount}>
+    <UnreadMessagePollingProvider initialCount={initialUnreadCount}>
       <NotificationProvider initialNotifications={initialNotifications}>
         <div className="h-full flex flex-col">
           <Navbar favorites={favoritesResult.data.favorites} />
           <div className="bg-gray-100 flex-1">{children}</div>
         </div>
       </NotificationProvider>
-    </UnreadMessageProvider>
+    </UnreadMessagePollingProvider>
   );
 };
 

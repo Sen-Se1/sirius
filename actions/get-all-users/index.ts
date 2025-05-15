@@ -16,13 +16,7 @@ const handler = async (data: GetAllUsersInput): Promise<GetAllUsersReturn> => {
   }
 
   try {
-    const members = await db.member.findMany({
-      include: {
-        user: true,
-      },
-    });
-
-    const users = members.map((member) => member.user);
+    const users = await db.user.findMany();
 
     return { data: users };
   } catch (error) {

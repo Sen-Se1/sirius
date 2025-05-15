@@ -2,7 +2,16 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Send, ImageIcon, FileText, Check, CheckCheck, X, Smile, MoreVertical } from "lucide-react";
+import {
+  Send,
+  ImageIcon,
+  FileText,
+  Check,
+  CheckCheck,
+  X,
+  Smile,
+  MoreVertical,
+} from "lucide-react";
 import { pusherClient } from "@/lib/pusher";
 import { getMessages } from "@/actions/get-messages";
 import { sendMessageWithFile } from "@/actions/send-message-with-file";
@@ -12,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useUnreadMessageContext } from "@/components/providers/unread-message-provider";
+import { useUnreadMessageContext } from "@/components/providers/unread-message-polling-provider";
 import { markMessagesAsRead } from "@/actions/mark-messages-as-read";
 import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
@@ -24,6 +33,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { editMessage } from "@/actions/edit-message";
 
 interface UnreadCounts {
   [senderId: string]: number;
@@ -48,7 +58,9 @@ const Conversation = ({
   highlightedMessageId,
   setHighlightedMessageId,
 }: ConversationProps) => {
-  const [realtimeMessages, setLocalRealtimeMessages] = useState<UIMessage[]>(propRealtimeMessages || []);
+  const [realtimeMessages, setLocalRealtimeMessages] = useState<UIMessage[]>(
+    propRealtimeMessages || []
+  );
   const [message, setMessage] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -56,9 +68,10 @@ const Conversation = ({
   const [isSending, setIsSending] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showMenu, setShowMenu] = useState<{ [key: string]: boolean }>({});
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<{ [key: string]: HTMLDivElement }>({});
-  const scrollAreaRef = useRef<HTMLDivElement>(null); // Ref for the content div inside ScrollArea
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { setUnreadCount } = useUnreadMessageContext();
@@ -68,7 +81,10 @@ const Conversation = ({
     try {
       const date = dateStr instanceof Date ? dateStr : new Date(dateStr);
       if (isNaN(date.getTime())) return "now";
-      return new Intl.DateTimeFormat("en-US", {
+      return new Intl.DateTimeFormat("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
       }).format(date);
@@ -83,7 +99,7 @@ const Conversation = ({
     const viewport = scrollAreaRef.current.parentElement;
     if (!viewport) return false;
     const { scrollTop, clientHeight, scrollHeight } = viewport;
-    return scrollTop + clientHeight >= scrollHeight - 100; // 100px threshold
+    return scrollTop + clientHeight >= scrollHeight - 100;
   };
 
   const scrollToBottom = () => {
@@ -187,14 +203,45 @@ const Conversation = ({
         setRealtimeMessages(updatedMessages);
         return updatedMessages;
       });
-      // No scrollToBottom here to keep user at current position
     });
+
+    channel.bind(
+      "message-edited",
+      (data: {
+        id: string;
+        senderId: string;
+        content: string | null;
+        filePath: string | null;
+        originalFileName: string | null;
+        fileType: string | null;
+        createdAt: string;
+        isRead: boolean;
+      }) => {
+        const updatedMessage: UIMessage = {
+          id: data.id,
+          senderId: data.senderId,
+          text: data.content,
+          filePath: data.filePath,
+          originalFileName: data.originalFileName,
+          fileType: data.fileType,
+          time: formatDate(data.createdAt),
+          isFromCurrentUser: data.senderId === userId,
+          isRead: data.isRead,
+        };
+        setLocalRealtimeMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === data.id ? { ...updatedMessage, isEditing: false } : msg
+          )
+        );
+      }
+    );
 
     return () => {
       pusherClient.unsubscribe(`user-${userId}`);
       pusherClient.unbind("new-message");
       pusherClient.unbind("message-read");
       pusherClient.unbind("message-deleted");
+      pusherClient.unbind("message-edited");
     };
   }, [userId, selectedChat?.recipientId]);
 
@@ -204,7 +251,7 @@ const Conversation = ({
       fetchMessages(selectedChat.recipientId).then((formattedMessages) => {
         setLocalRealtimeMessages(formattedMessages);
         setRealtimeMessages(formattedMessages);
-        scrollToBottom(); // Scroll to bottom after fetching messages
+        scrollToBottom();
         markMessagesAsRead({ senderId: selectedChat.recipientId }).then(
           (result) => {
             if (result.data) {
@@ -236,7 +283,12 @@ const Conversation = ({
   }, [highlightedMessageId]);
 
   const onSendMessageHandler = async () => {
-    if ((message.trim() || selectedFile) && userId && selectedChat && !isSending) {
+    if (
+      (message.trim() || selectedFile) &&
+      userId &&
+      selectedChat &&
+      !isSending
+    ) {
       const tempId = `temp-${Date.now()}`;
       const messageText = message.trim();
       const currentTime = formatDate(new Date());
@@ -290,7 +342,8 @@ const Conversation = ({
                   ...msg,
                   id: serverMessage?.id ?? tempId,
                   filePath: serverMessage?.filePath ?? msg.filePath,
-                  originalFileName: serverMessage?.originalFileName ?? msg.originalFileName,
+                  originalFileName:
+                    serverMessage?.originalFileName ?? msg.originalFileName,
                   fileType: serverMessage?.fileType ?? msg.fileType,
                   isPending: false,
                   isRead: serverMessage?.isRead ?? false,
@@ -300,7 +353,7 @@ const Conversation = ({
           setRealtimeMessages(updatedMessages);
           return updatedMessages;
         });
-        scrollToBottom(); // Scroll to bottom after sending a message
+        scrollToBottom();
       } catch (error) {
         console.error("Error sending message:", error);
         setLocalRealtimeMessages((prev) => {
@@ -313,6 +366,25 @@ const Conversation = ({
       } finally {
         setIsSending(false);
       }
+    }
+  };
+
+  const onEditMessageHandler = async () => {
+    if (!editingMessageId || !message.trim()) return;
+
+    try {
+      const result = await editMessage({
+        messageId: editingMessageId,
+        content: message,
+      });
+      if (result.error) {
+        console.error(result.error);
+      } else {
+        setMessage("");
+        setEditingMessageId(null);
+      }
+    } catch (error) {
+      console.error("Error editing message:", error);
     }
   };
 
@@ -344,7 +416,7 @@ const Conversation = ({
       };
       markAsRead();
     }
-  }, [selectedChat?.recipientId, userId, setUnreadCounts]);
+  }, [selectedChat?.recipientId, userId]);
 
   const { lastReadMessageId, lastSentMessageId } = (() => {
     const sentMessages = realtimeMessages
@@ -381,19 +453,21 @@ const Conversation = ({
       console.error("Error deleting message:", error);
     }
     setShowMenu((prev) => ({ ...prev, [msgId]: false }));
-    // No scrollToBottom here to keep user at current position
   };
 
   const handleEdit = (msgId: string) => {
     const msg = realtimeMessages.find((m) => m.id === msgId);
-    if (msg && msg.text) {
-      setMessage(msg.text);
+    if (msg) {
+      setMessage(msg.text || "");
+      setEditingMessageId(msgId);
       setLocalRealtimeMessages((prev) =>
         prev.map((m) => (m.id === msgId ? { ...m, isEditing: true } : m))
       );
       setShowMenu((prev) => ({ ...prev, [msgId]: false }));
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
     }
-    // Add logic to save edited message if needed
   };
 
   if (!selectedChat) {
@@ -422,7 +496,9 @@ const Conversation = ({
             <div className="h-full flex items-center justify-center">
               <div className="text-center text-gray-500">
                 <p className="mb-2">No message</p>
-                <p className="text-sm">Start the conversation by sending a message</p>
+                <p className="text-sm">
+                  Start the conversation by sending a message
+                </p>
               </div>
             </div>
           ) : (
@@ -450,10 +526,13 @@ const Conversation = ({
                             ? "border-2 border-blue-900"
                             : "border-2 border-gray-700"
                           : ""
-                      }`}
+                      } ${msg.isEditing ? "border-2 border-yellow-500" : ""}`}
                     >
                       {msg.isFromCurrentUser && (
-                        <DropdownMenu open={showMenu[msg.id]} onOpenChange={() => handleMenuToggle(msg.id)}>
+                        <DropdownMenu
+                          open={showMenu[msg.id]}
+                          onOpenChange={() => handleMenuToggle(msg.id)}
+                        >
                           <DropdownMenuTrigger asChild>
                             <div
                               className="absolute left-[-35px] top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
@@ -462,20 +541,32 @@ const Conversation = ({
                                 handleMenuToggle(msg.id);
                               }}
                             >
-                              <MoreVertical size={16} className="text-blue-500 cursor-pointer" />
+                              <MoreVertical
+                                size={16}
+                                className="text-blue-500 cursor-pointer"
+                              />
                             </div>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="start" className="w-32">
-                            <DropdownMenuItem onClick={() => handleEdit(msg.id)}>
+                            <DropdownMenuItem
+                              onClick={() => handleEdit(msg.id)}
+                            >
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDelete(msg.id)} className="text-red-600">
+                            <DropdownMenuItem
+                              onClick={() => handleDelete(msg.id)}
+                              className="text-red-600"
+                            >
                               Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       )}
-                      {msg.text && <p className="max-w-[600px] break-words whitespace-pre-wrap">{msg.text}</p>}
+                      {msg.text && (
+                        <p className="max-w-[600px] break-words whitespace-pre-wrap">
+                          {msg.text}
+                        </p>
+                      )}
                       {msg.filePath && msg.fileType && (
                         <div className="mx-[-9px] mt-2">
                           {msg.fileType.startsWith("image/") ? (
@@ -542,14 +633,15 @@ const Conversation = ({
                                     )}
                                   </span>
                                 )}
-                                {msg.id === lastSentMessageId && !msg.isRead && (
-                                  <span className="ml-2 flex items-center">
-                                    <Check
-                                      size={16}
-                                      className="text-blue-100"
-                                    />
-                                  </span>
-                                )}
+                                {msg.id === lastSentMessageId &&
+                                  !msg.isRead && (
+                                    <span className="ml-2 flex items-center">
+                                      <Check
+                                        size={16}
+                                        className="text-blue-100"
+                                      />
+                                    </span>
+                                  )}
                               </>
                             )}
                           </>
@@ -616,6 +708,24 @@ const Conversation = ({
       <Card className="bg-white border-t border-none">
         <CardContent className="p-3">
           <div className="flex items-center gap-2">
+            {editingMessageId && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setMessage("");
+                  setEditingMessageId(null);
+                  setLocalRealtimeMessages((prev) =>
+                    prev.map((msg) =>
+                      msg.id === editingMessageId
+                        ? { ...msg, isEditing: false }
+                        : msg
+                    )
+                  );
+                }}
+              >
+                Cancel
+              </Button>
+            )}
             <div className="flex space-x-2">
               <Button
                 variant="ghost"
@@ -666,7 +776,11 @@ const Conversation = ({
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    onSendMessageHandler();
+                    if (editingMessageId) {
+                      onEditMessageHandler();
+                    } else {
+                      onSendMessageHandler();
+                    }
                   }
                 }}
                 disabled={isSending}
@@ -688,12 +802,22 @@ const Conversation = ({
               )}
             </div>
             <Button
-              onClick={onSendMessageHandler}
+              onClick={() => {
+                if (editingMessageId) {
+                  onEditMessageHandler();
+                } else {
+                  onSendMessageHandler();
+                }
+              }}
               className="bg-blue-500 hover:bg-blue-600 rounded-full h-10 w-10 p-0 flex items-center justify-center"
-              disabled={!message.trim() && !selectedFile || isSending}
-              aria-label="Send message"
+              disabled={
+                editingMessageId
+                  ? !message.trim()
+                  : (!message.trim() && !selectedFile) || isSending
+              }
+              aria-label={editingMessageId ? "Save edit" : "Send message"}
             >
-              <Send size={18} />
+              {editingMessageId ? "Save" : <Send size={18} />}
             </Button>
           </div>
         </CardContent>

@@ -54,7 +54,7 @@ export async function POST(req: Request) {
 
   // Handle organization events
   if (eventType === "organization.created" || eventType === "organization.updated") {
-    const { id, name, slug, logo_url } = payload.data;    
+    const { id, name, slug, logo_url } = payload.data;
 
     await db.organization.upsert({
       where: { id },
@@ -62,7 +62,8 @@ export async function POST(req: Request) {
       create: {
         id,
         name,
-        slug, logo: logo_url
+        slug,
+        logo: logo_url,
       },
     });
   }
@@ -101,6 +102,36 @@ export async function POST(req: Request) {
         userId,
         orgId,
         roleId: role,
+      },
+    });
+  }
+  // Handle delete events
+  if (eventType === "user.deleted") {
+    const { id } = payload.data;
+    await db.user.deleteMany({
+      where: { id },
+    });
+  }
+
+  if (eventType === "organization.deleted") {
+    const { id } = payload.data;
+    await db.organization.deleteMany({
+      where: { id },
+    });
+  }
+
+  if (eventType === "organizationMembership.deleted") {
+    const { public_user_data, organization } = payload.data;
+    const userId = public_user_data?.user_id;
+    const orgId = organization?.id;
+    if (!userId || !orgId) {
+      console.error("Missing userId or orgId in membership delete payload");
+      return new Response("Invalid payload", { status: 400 });
+    }
+    await db.member.deleteMany({
+      where: {
+        userId,
+        orgId,
       },
     });
   }
