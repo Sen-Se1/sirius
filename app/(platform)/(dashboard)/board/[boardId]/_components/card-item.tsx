@@ -40,23 +40,19 @@ export const CardItem = ({ data, index }: CardItemProps) => {
     }
   }
 
-  // Determine card background color based on priority
-  let cardClass = "truncate border-2 border-transparent hover:border-black py-2 px-3 text-sm bg-white rounded-md shadow-sm";
-  if (data.priority) {
-    switch (data.priority.toLowerCase()) {
-      case "high":
-        cardClass += " bg-red-50"; // Light red for high priority
-        break;
-      case "medium":
-        cardClass += " bg-white"; // White for medium priority
-        break;
-      case "low":
-        cardClass += " bg-green-50"; // Light green for low priority
-        break;
-      default:
-        cardClass += " bg-white"; // Default background
-    }
-  }
+  const priorityBgMap: Record<string, string> = {
+    high: "bg-red-100",
+    medium: "bg-white",
+    low: "bg-green-50",
+  };
+
+  // Compute background class based on priority
+  const priorityKey = data.priority?.toLowerCase();
+  const priorityBgClass = priorityKey ? priorityBgMap[priorityKey] : undefined;
+  const bgClass = priorityBgClass || "bg-white";
+
+  // Define card class with dynamic background
+  const cardClass = `truncate border-2 border-transparent hover:border-black py-2 px-3 text-sm ${bgClass} rounded-md shadow-sm`;
 
   return (
     <Draggable draggableId={data.id} index={index}>

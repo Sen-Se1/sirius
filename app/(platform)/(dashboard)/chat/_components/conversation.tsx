@@ -708,24 +708,6 @@ const Conversation = ({
       <Card className="bg-white border-t border-none">
         <CardContent className="p-3">
           <div className="flex items-center gap-2">
-            {editingMessageId && (
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setMessage("");
-                  setEditingMessageId(null);
-                  setLocalRealtimeMessages((prev) =>
-                    prev.map((msg) =>
-                      msg.id === editingMessageId
-                        ? { ...msg, isEditing: false }
-                        : msg
-                    )
-                  );
-                }}
-              >
-                Cancel
-              </Button>
-            )}
             <div className="flex space-x-2">
               <Button
                 variant="ghost"
@@ -771,7 +753,9 @@ const Conversation = ({
                 placeholder="Write your message..."
                 ref={inputRef}
                 value={message}
-                className="flex-1 bg-gray-100 border-0 pr-10"
+                className={`flex-1 bg-gray-100 border-0 ${
+                  editingMessageId ? "pr-20" : "pr-10"
+                }`}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
@@ -785,6 +769,27 @@ const Conversation = ({
                 }}
                 disabled={isSending}
               />
+              {editingMessageId && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-500 hover:bg-gray-200"
+                  onClick={() => {
+                    setMessage("");
+                    setEditingMessageId(null);
+                    setLocalRealtimeMessages((prev) =>
+                      prev.map((msg) =>
+                        msg.id === editingMessageId
+                          ? { ...msg, isEditing: false }
+                          : msg
+                      )
+                    );
+                  }}
+                  aria-label="Cancel editing"
+                >
+                  <X size={20} />
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
@@ -817,7 +822,7 @@ const Conversation = ({
               }
               aria-label={editingMessageId ? "Save edit" : "Send message"}
             >
-              {editingMessageId ? "Save" : <Send size={18} />}
+              {editingMessageId ? <Check /> : <Send size={18} />}
             </Button>
           </div>
         </CardContent>
