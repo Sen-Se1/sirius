@@ -34,7 +34,7 @@ export const Checklist = ({ data }: ChecklistProps) => {
 
   return (
     <div className="space-y-4">
-      {data.checklists.map((checklist) => (
+      {data.checklists.sort((a, b) => a.order - b.order).map((checklist) => (
         <ChecklistItem
           key={checklist.id}
           checklist={checklist}
@@ -205,7 +205,7 @@ const ChecklistItem = ({ checklist, boardId, cardId }: ChecklistItemProps) => {
           />
         </div>
         <p className="text-sm text-neutral-700 mb-2">{progress}%</p>
-        {checklist.items.map((item) => (
+        {checklist.items.sort((a, b) => a.order - b.order).map((item) => (
           <ChecklistItemRow
             key={item.id}
             item={item}

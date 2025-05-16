@@ -93,11 +93,13 @@ const handler = async (data: InputType): Promise<ReturnType> => {
         const newChecklist = await db.checklist.create({
           data: {
             title: checklist.title,
+            order: checklist.order,
             cardId: newCardId,
             items: {
               create: checklist.items.map((item) => ({
                 title: item.title,
                 checked: item.checked,
+                order: item.order,
               })),
             },
           },
@@ -106,7 +108,6 @@ const handler = async (data: InputType): Promise<ReturnType> => {
           },
         });
 
-        // Create audit log for the new checklist
         // await createAuditLog({
         //   entityTitle: newChecklist.title,
         //   entityId: newChecklist.id,
@@ -114,7 +115,6 @@ const handler = async (data: InputType): Promise<ReturnType> => {
         //   action: ACTION.CREATE,
         // });
 
-        // Create audit logs for the new checklist items
         // for (const item of newChecklist.items) {
         //   await createAuditLog({
         //     entityTitle: item.title,
@@ -125,7 +125,6 @@ const handler = async (data: InputType): Promise<ReturnType> => {
         // }
       }
 
-      // Create audit log for the new card
       // const newCard = list.cards.find((card) => card.id === newCardId);
       // if (newCard) {
       //   await createAuditLog({
@@ -137,7 +136,6 @@ const handler = async (data: InputType): Promise<ReturnType> => {
       // }
     }
 
-    // Create audit log for the new list
     await createAuditLog({
       entityTitle: list.title,
       entityId: list.id,

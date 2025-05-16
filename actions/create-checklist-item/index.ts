@@ -46,6 +46,11 @@ const handler = async (data: InputType): Promise<ReturnType> => {
             },
           },
         },
+        items: {
+          orderBy: { order: "desc" },
+          select: { order: true },
+          take: 1,
+        },
       },
     });
 
@@ -55,10 +60,14 @@ const handler = async (data: InputType): Promise<ReturnType> => {
       };
     }
 
+    const lastItemOrder = checklist.items[0]?.order ?? 0;
+    const newOrder = lastItemOrder + 1;
+
     item = await db.checklistItem.create({
       data: {
         title,
         checklistId,
+        order: newOrder,
       },
     });
 

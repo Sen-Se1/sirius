@@ -65,10 +65,12 @@ const handler = async (data: InputType): Promise<ReturnType> => {
         checklists: {
           create: cardToCopy.checklists.map((checklist) => ({
             title: checklist.title,
+            order: checklist.order,
             items: {
               create: checklist.items.map((item) => ({
                 title: item.title,
                 checked: item.checked,
+                order: item.order,
               })),
             },
           })),
