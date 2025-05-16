@@ -29,6 +29,11 @@ export async function GET(
             title: true,
           },
         },
+        checklists: {
+          include: {
+            items: true,
+          },
+        },
       },
     });
 

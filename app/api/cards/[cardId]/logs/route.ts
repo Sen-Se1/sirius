@@ -18,8 +18,39 @@ export async function GET(
     const auditLogs = await db.auditLog.findMany({
       where: {
         orgId,
-        entityId: params.cardId,
-        entityType: ENTITY_TYPE.CARD,
+        OR: [
+          { entityId: params.cardId, entityType: ENTITY_TYPE.CARD },
+          {
+            entityId: params.cardId,
+            entityType: ENTITY_TYPE.CHECKLIST,
+          },
+          {
+            entityId: {
+              in: await db.checklist
+                .findMany({
+                  where: { cardId: params.cardId },
+                  select: { id: true },
+                })
+                .then((checklists) => checklists.map((c) => c.id)),
+            },
+            entityType: ENTITY_TYPE.CHECKLIST,
+          },
+          {
+            entityId: {
+              in: await db.checklistItem
+                .findMany({
+                  where: {
+                    checklist: {
+                      cardId: params.cardId,
+                    },
+                  },
+                  select: { id: true },
+                })
+                .then((items) => items.map((i) => i.id)),
+            },
+            entityType: ENTITY_TYPE.CHECKLIST_ITEM,
+          },
+        ],
       },
       orderBy: {
         createdAt: "desc",

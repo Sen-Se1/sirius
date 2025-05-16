@@ -33,6 +33,13 @@ const handler = async (data: InputType): Promise<ReturnType> => {
           },
         },
       },
+      include: {
+        checklists: {
+          include: {
+            items: true,
+          },
+        },
+      },
     });
 
     if (!cardToCopy) {
@@ -55,6 +62,17 @@ const handler = async (data: InputType): Promise<ReturnType> => {
         dueDate: cardToCopy.dueDate,
         priority: cardToCopy.priority,
         listId: cardToCopy.listId,
+        checklists: {
+          create: cardToCopy.checklists.map((checklist) => ({
+            title: checklist.title,
+            items: {
+              create: checklist.items.map((item) => ({
+                title: item.title,
+                checked: item.checked,
+              })),
+            },
+          })),
+        },
       },
     });
 
@@ -64,6 +82,29 @@ const handler = async (data: InputType): Promise<ReturnType> => {
       entityType: ENTITY_TYPE.CARD,
       action: ACTION.CREATE,
     });
+
+    // const newChecklists = await db.checklist.findMany({
+    //   where: { cardId: card.id },
+    //   include: { items: true },
+    // });
+
+    // for (const checklist of newChecklists) {
+    //   await createAuditLog({
+    //     entityTitle: checklist.title,
+    //     entityId: checklist.id,
+    //     entityType: ENTITY_TYPE.CHECKLIST,
+    //     action: ACTION.CREATE,
+    //   });
+
+    //   for (const item of checklist.items) {
+    //     await createAuditLog({
+    //       entityTitle: item.title,
+    //       entityId: item.id,
+    //       entityType: ENTITY_TYPE.CHECKLIST_ITEM,
+    //       action: ACTION.CREATE,
+    //     });
+    //   }
+    // }
   } catch (error) {
     return {
       error: "Failed to copy.",

@@ -1,7 +1,7 @@
 "use client";
 
 import { toast } from "sonner";
-import { Copy, Trash2 } from "lucide-react";
+import { Copy, Trash2, Plus } from "lucide-react";
 import { useParams } from "next/navigation";
 
 import { CardWithList } from "@/types";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { deleteCard } from "@/actions/delete-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCardModal } from "@/hooks/use-card-modal";
+import { ChecklistFormPopover } from "@/components/form/checklist-form-popover";
 
 interface ActionsProps {
   data: CardWithList;
@@ -67,6 +68,16 @@ export const Actions = ({ data }: ActionsProps) => {
   return (
     <div className="space-y-2 mt-2">
       <p className="text-xs font-semibold">Actions</p>
+      <ChecklistFormPopover cardId={data.id}>
+        <Button
+          variant="gray"
+          className="w-full justify-start"
+          size="inline"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Create Checklist
+        </Button>
+      </ChecklistFormPopover>
       <Button
         onClick={onCopy}
         disabled={isLoadingCopy}
@@ -95,6 +106,7 @@ Actions.Skeleton = function ActionsSkeleton() {
   return (
     <div className="space-y-2 mt-2">
       <Skeleton className="w-20 h-4 bg-neutral-200" />
+      <Skeleton className="w-full h-8 bg-neutral-200" />
       <Skeleton className="w-full h-8 bg-neutral-200" />
       <Skeleton className="w-full h-8 bg-neutral-200" />
     </div>

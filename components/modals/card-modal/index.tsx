@@ -15,6 +15,7 @@ import { Priority } from "./priority";
 
 import { AuditLog } from "@prisma/client";
 import { Activity } from "./activity";
+import { Checklist } from "./checklist";
 
 export const CardModal = () => {
   const id = useCardModal((state) => state.id);
@@ -26,6 +27,9 @@ export const CardModal = () => {
     queryFn: () => fetcher(`/api/cards/${id}`),
   });
 
+  console.log('cardData', cardData);
+  
+
   const { data: auditLogsData } = useQuery<AuditLog[]>({
     queryKey: ["card-logs", id],
     queryFn: () => fetcher(`/api/cards/${id}/logs`),
@@ -33,7 +37,7 @@ export const CardModal = () => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-h-[95vh] overflow-y-auto">
         {!cardData ? <Header.Skeleton /> : <Header data={cardData} />}
         <div className="grid grid-cols-1 md:grid-cols-4 md:gap-4">
           <div className="col-span-3">
@@ -52,6 +56,11 @@ export const CardModal = () => {
                 <Priority.Skeleton />
               ) : (
                 <Priority data={cardData} />
+              )}
+              {!cardData ? (
+                <Checklist.Skeleton />
+              ) : (
+                <Checklist data={cardData} />
               )}
               {!auditLogsData ? (
                 <Activity.Skeleton />
