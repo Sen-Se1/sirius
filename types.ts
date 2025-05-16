@@ -1,6 +1,6 @@
-import { Card, List, Prisma } from "@prisma/client";
+import { List, Prisma } from "@prisma/client";
 
-export type ListWithCards = List & { cards: Card[] };
+export type ListWithCards = List & { cards: CardWithList[] };
 
 export type CardWithList = Prisma.CardGetPayload<{
   include: {

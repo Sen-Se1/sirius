@@ -30,6 +30,13 @@ const BoardIdPage = async ({ params }: BoardIdPageProps) => {
         orderBy: {
           order: "asc",
         },
+        include: {
+          checklists: {
+            include: {
+              items: true,
+            },
+          },
+        },
       },
     },
     orderBy: {
