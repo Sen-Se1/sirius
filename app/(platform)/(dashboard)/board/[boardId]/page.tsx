@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 
 import { ListContainer } from "./_components/list-container";
+import { ListWithCards } from "@/types";
 
 interface BoardIdPageProps {
   params: {
@@ -18,7 +19,7 @@ const BoardIdPage = async ({ params }: BoardIdPageProps) => {
     redirect("/select-org");
   }
 
-  const lists = await db.list.findMany({
+  const lists : ListWithCards[] = await db.list.findMany({
     where: {
       boardId: params.boardId,
       board: {
@@ -31,6 +32,7 @@ const BoardIdPage = async ({ params }: BoardIdPageProps) => {
           order: "asc",
         },
         include: {
+          list: true,
           checklists: {
             include: {
               items: true,

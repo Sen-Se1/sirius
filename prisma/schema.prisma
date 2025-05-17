@@ -41,6 +41,7 @@ model Organization {
   orgSubscriptions OrgSubscription[]
   notifications    Notification[]
   Invitation       Invitation[]
+  roles            Role[]
   auditLogs        AuditLog[]
 }
 
@@ -66,11 +67,15 @@ model Invitation {
 model Role {
   id        String   @id
   name      String
+  orgId     String
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   members     Member[]
   invitations Invitation[]
+
+  @@index([orgId])
 }
 
 model Member {

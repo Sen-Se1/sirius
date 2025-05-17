@@ -1,7 +1,12 @@
 import { ContactUsSchema } from "@/lib/validationSchemas";
 import { NextResponse, NextRequest } from "next/server";
-import { ContactUsDto } from "@/lib/dtos";
 import { sendContactUsEmail } from "@/lib/mail/contactUs";
+
+interface ContactUsDto {
+  name: string;
+  email: string;
+  message: string;
+}
 
 /**
  *  @method  POST
