@@ -75,7 +75,7 @@ export const Actions = ({ data }: ActionsProps) => {
           size="inline"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Create Checklist
+          Create checklist
         </Button>
       </ChecklistFormPopover>
       <Button
@@ -86,7 +86,7 @@ export const Actions = ({ data }: ActionsProps) => {
         size="inline"
       >
         <Copy className="h-4 w-4 mr-2" />
-        Copy
+        Copy card
       </Button>
       <Button
         onClick={onDelete}
@@ -96,7 +96,7 @@ export const Actions = ({ data }: ActionsProps) => {
         size="inline"
       >
         <Trash2 className="h-4 w-4 mr-2" />
-        Delete
+        Delete card
       </Button>
     </div>
   );
