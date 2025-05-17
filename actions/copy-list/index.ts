@@ -3,6 +3,7 @@
 import { auth } from "@clerk/nextjs";
 import { revalidatePath } from "next/cache";
 import { ACTION, ENTITY_TYPE } from "@prisma/client";
+import { List } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/create-audit-log";
@@ -21,7 +22,7 @@ const handler = async (data: InputType): Promise<ReturnType> => {
   }
 
   const { id, boardId } = data;
-  let list;
+  let list: List;
 
   try {
     const listToCopy = await db.list.findUnique({
