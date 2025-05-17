@@ -10,7 +10,6 @@ import { createSafeAction } from "@/lib/create-safe-action";
 
 import { CopyList } from "./schema";
 import { InputType, ReturnType } from "./types";
-import { ListWithCards } from "@/types";
 
 const handler = async (data: InputType): Promise<ReturnType> => {
   const { userId, orgId } = auth();
@@ -22,7 +21,7 @@ const handler = async (data: InputType): Promise<ReturnType> => {
   }
 
   const { id, boardId } = data;
-  let list: ListWithCards;
+  let list;
 
   try {
     const listToCopy = await db.list.findUnique({
@@ -63,38 +62,30 @@ const handler = async (data: InputType): Promise<ReturnType> => {
         boardId: listToCopy.boardId,
         title: `${listToCopy.title} - Copy`,
         order: newOrder,
-        cards: {
-          createMany: {
-            data: listToCopy.cards.map((card) => ({
-              title: card.title,
-              description: card.description,
-              order: card.order,
-              dueDate: card.dueDate,
-              priority: card.priority,
-            })),
-          },
-        },
-      },
-      include: {
-        cards: true,
       },
     });
 
     const cardMap = new Map<string, string>();
-    listToCopy.cards.forEach((originalCard, index) => {
-      cardMap.set(originalCard.id, list.cards[index].id);
-    });
 
     for (const originalCard of listToCopy.cards) {
-      const newCardId = cardMap.get(originalCard.id);
-      if (!newCardId) continue;
+      const newCard = await db.card.create({
+        data: {
+          title: originalCard.title,
+          description: originalCard.description,
+          order: originalCard.order,
+          dueDate: originalCard.dueDate,
+          priority: originalCard.priority,
+          listId: list.id,
+        },
+      });
+      cardMap.set(originalCard.id, newCard.id);
 
       for (const checklist of originalCard.checklists) {
-        const newChecklist = await db.checklist.create({
+        await db.checklist.create({
           data: {
             title: checklist.title,
             order: checklist.order,
-            cardId: newCardId,
+            cardId: newCard.id,
             items: {
               create: checklist.items.map((item) => ({
                 title: item.title,
@@ -103,37 +94,8 @@ const handler = async (data: InputType): Promise<ReturnType> => {
               })),
             },
           },
-          include: {
-            items: true,
-          },
         });
-
-        // await createAuditLog({
-        //   entityTitle: newChecklist.title,
-        //   entityId: newChecklist.id,
-        //   entityType: ENTITY_TYPE.CHECKLIST,
-        //   action: ACTION.CREATE,
-        // });
-
-        // for (const item of newChecklist.items) {
-        //   await createAuditLog({
-        //     entityTitle: item.title,
-        //     entityId: item.id,
-        //     entityType: ENTITY_TYPE.CHECKLIST_ITEM,
-        //     action: ACTION.CREATE,
-        //   });
-        // }
       }
-
-      // const newCard = list.cards.find((card) => card.id === newCardId);
-      // if (newCard) {
-      //   await createAuditLog({
-      //     entityTitle: newCard.title,
-      //     entityId: newCard.id,
-      //     entityType: ENTITY_TYPE.CARD,
-      //     action: ACTION.CREATE,
-      //   });
-      // }
     }
 
     await createAuditLog({
