@@ -7,13 +7,13 @@ export const sendContactUsEmail = async (
   message: string
 ) => {
   try {
-    const appDomain = process.env.APP_DOMAIN_DEV;
+    const appDomain = process.env.NEXT_PUBLIC_APP_URL;
     const appName = process.env.APP_NAME;
     const emailUser = process.env.EMAIL_USER;
 
     if (!appDomain || !appName || !emailUser) {
       throw new Error(
-        "Environment variables APP_DOMAIN_DEV, APP_NAME, or EMAIL_USER are missing."
+        "Environment variables NEXT_PUBLIC_APP_URL, APP_NAME, or EMAIL_USER are missing."
       );
     }
 

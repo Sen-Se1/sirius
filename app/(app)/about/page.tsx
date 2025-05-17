@@ -33,7 +33,7 @@ export default function About() {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Our Vision</h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Sirius represents the future of project management. We believe in optimizing every aspect of a project by combining cutting-edge technology with human expertise. Whether you're an ambitious startup or a large enterprise, our platform adapts to your needs to ensure your project's success.
+            Sirius represents the future of project management. We believe in optimizing every aspect of a project by combining cutting-edge technology with human expertise. Whether you&apos;re an ambitious startup or a large enterprise, our platform adapts to your needs to ensure your project&apos;s success.
             </p>
           </div>
         </div>
@@ -77,7 +77,7 @@ export default function About() {
           <div className="text-center mb-10">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">Notre Solution</h2>
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Sirius is more than just a project management platform. It's an intelligent ecosystem that allows you to control all aspects of your projects with powerful tools, an intuitive interface, and advanced collaboration capabilities.
+            Sirius is more than just a project management platform. It&apos;s an intelligent ecosystem that allows you to control all aspects of your projects with powerful tools, an intuitive interface, and advanced collaboration capabilities.
             </p>
           </div>
 
