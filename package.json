@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "vercel-build": "prisma generate && prisma migrate deploy && next build",
+    "vercel-build-1": "prisma generate && prisma migrate deploy && next build",
+    "vercel-build-2": "prisma generate && prisma db push && next build",
+    "vercel-build-3": "prisma generate && prisma migrate dev --name auto-$(date +'%Y%m%d%H%M%S') --schema=./prisma/schema.prisma && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate"
