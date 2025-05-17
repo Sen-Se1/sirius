@@ -2,7 +2,7 @@
 
 import { auth } from "@clerk/nextjs";
 import { revalidatePath } from "next/cache";
-import { ACTION, ENTITY_TYPE } from "@prisma/client";
+import { ACTION, ChecklistItem, ENTITY_TYPE } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/create-audit-log";
@@ -22,7 +22,7 @@ const handler = async (data: InputType): Promise<ReturnType> => {
 
   const { checklistId, title } = data;
 
-  let item;
+  let item: ChecklistItem;
 
   try {
     const checklist = await db.checklist.findUnique({
@@ -36,20 +36,20 @@ const handler = async (data: InputType): Promise<ReturnType> => {
           },
         },
       },
-      include: {
+      select: {
+        id: true,
         card: {
-          include: {
+          select: {
             list: {
-              include: {
-                board: true,
+              select: {
+                board: {
+                  select: {
+                    id: true,
+                  },
+                },
               },
             },
           },
-        },
-        items: {
-          orderBy: { order: "desc" },
-          select: { order: true },
-          take: 1,
         },
       },
     });
@@ -60,8 +60,16 @@ const handler = async (data: InputType): Promise<ReturnType> => {
       };
     }
 
-    const lastItemOrder = checklist.items[0]?.order ?? 0;
-    const newOrder = lastItemOrder + 1;
+    const maxOrder = await db.checklistItem.aggregate({
+      where: {
+        checklistId,
+      },
+      _max: {
+        order: true,
+      },
+    });
+
+    const newOrder = (maxOrder._max.order ?? 0) + 1;
 
     item = await db.checklistItem.create({
       data: {

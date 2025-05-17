@@ -2,7 +2,7 @@
 
 import { auth } from "@clerk/nextjs";
 import { revalidatePath } from "next/cache";
-import { ACTION, ENTITY_TYPE } from "@prisma/client";
+import { ACTION, Checklist, ENTITY_TYPE } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/create-audit-log";
@@ -22,7 +22,7 @@ const handler = async (data: InputType): Promise<ReturnType> => {
 
   const { id, boardId } = data;
 
-  let checklist;
+  let checklist: Checklist;
 
   try {
     checklist = await db.checklist.delete({
