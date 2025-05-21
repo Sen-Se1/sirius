@@ -15,3 +15,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to check card deadlines" }, { status: 500 });
   }
 }
+
+export async function GET() {
+  try {
+    const result = await checkCardDeadlines({});
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    console.error("Cron job error:", error);
+    return NextResponse.json({ error: "Failed to check card deadlines" }, { status: 500 });
+  }
+}
