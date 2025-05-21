@@ -18,6 +18,13 @@ const handler = async (data: InputType): Promise<ReturnType> => {
         dueDate: {
           lt: dayAfterTomorrowStart, // Include cards up to tomorrow
         },
+        notifications: {
+          none: {
+            createdAt: {
+              gte: todayStart, // Prevent duplicate notifications today
+            },
+          },
+        },
       },
       include: {
         list: {
@@ -27,31 +34,16 @@ const handler = async (data: InputType): Promise<ReturnType> => {
             },
           },
         },
-        notifications: {
-          where: {
-            createdAt: {
-              gte: todayStart, // Notifications created today
-            },
-          },
-        },
       },
     });
 
     let notificationsCreated = 0;
 
     for (const card of cards) {
-      const dueDate = new Date(card.dueDate!);      
+      const dueDate = new Date(card.dueDate!);
       const dueDateOnly = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
       const todayDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const tomorrowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-
-      const hasRecentNotification = card.notifications.some(
-        (notification) => notification.createdAt >= card.updatedAt
-      );
-
-      if (hasRecentNotification) {
-        continue;
-      }
 
       let message = "";
 
