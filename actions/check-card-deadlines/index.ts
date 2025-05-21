@@ -8,13 +8,15 @@ import { pusherServer } from "@/lib/pusher";
 
 const handler = async (data: InputType): Promise<ReturnType> => {
   try {
-    const overdueCards = await db.card.findMany({
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dayAfterTomorrowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
+
+    // Fetch cards that are overdue, due today, or due tomorrow
+    const cards = await db.card.findMany({
       where: {
         dueDate: {
-          lte: new Date(),
-        },
-        notifications: {
-          none: {},
+          lt: dayAfterTomorrowStart, // Include cards up to tomorrow
         },
       },
       include: {
@@ -25,12 +27,44 @@ const handler = async (data: InputType): Promise<ReturnType> => {
             },
           },
         },
+        notifications: {
+          where: {
+            createdAt: {
+              gte: todayStart, // Notifications created today
+            },
+          },
+        },
       },
     });
 
     let notificationsCreated = 0;
 
-    for (const card of overdueCards) {
+    for (const card of cards) {
+      const dueDate = new Date(card.dueDate!);      
+      const dueDateOnly = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+      const todayDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const tomorrowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+
+      const hasRecentNotification = card.notifications.some(
+        (notification) => notification.createdAt >= card.updatedAt
+      );
+
+      if (hasRecentNotification) {
+        continue;
+      }
+
+      let message = "";
+
+      if (dueDateOnly < todayDateOnly) {
+        message = `Overdue: Card "${card.title}" in list "${card.list.title}" on board "${card.list.board.title}" has passed its deadline.`;
+      } else if (dueDateOnly.getTime() === todayDateOnly.getTime()) {
+        message = `Due Today: Card "${card.title}" in list "${card.list.title}" on board "${card.list.board.title}" is due today.`;
+      } else if (dueDateOnly.getTime() === tomorrowDateOnly.getTime()) {
+        message = `Due Tomorrow: Card "${card.title}" in list "${card.list.title}" on board "${card.list.board.title}" is due tomorrow.`;
+      } else {
+        continue;
+      }
+
       const members = await db.member.findMany({
         where: { orgId: card.list.board.orgId },
       });
@@ -40,7 +74,7 @@ const handler = async (data: InputType): Promise<ReturnType> => {
           data: {
             userId: member.userId,
             orgId: card.list.board.orgId,
-            message: `You have a deadline in card "${card.title}"`,
+            message,
             isRead: false,
             cardId: card.id,
           },
