@@ -11,7 +11,7 @@ export type ReturnType = ActionState<
       id: string;
       senderId: string;
       content: string | null;
-      filePath: string | null;
+      fileId: string | null;
       originalFileName: string | null;
       fileType: string | null;
       createdAt: Date;

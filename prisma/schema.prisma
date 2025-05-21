@@ -274,9 +274,8 @@ model ChatMessage {
   sender           User     @relation(name: "Sender", fields: [senderId], references: [id], onDelete: Cascade)
   recipientId      String
   recipient        User     @relation(name: "Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  // content          String  @db.Text
   content          String?  @db.Text
-  filePath         String?  @db.Text
+  fileId           String?  @db.Text
   originalFileName String?  @db.Text
   fileType         String?  @db.Text
   isRead           Boolean  @default(false)

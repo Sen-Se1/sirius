@@ -6,6 +6,7 @@ import { createSafeAction } from "@/lib/create-safe-action";
 import { DeleteMessage } from "./schema";
 import { InputType, ReturnType } from "./types";
 import { pusherServer } from "@/lib/pusher";
+import { deleteFromGoogleDrive } from "@/lib/google-drive";
 
 const handler = async (data: InputType): Promise<ReturnType> => {
   const { userId } = auth();
@@ -19,7 +20,7 @@ const handler = async (data: InputType): Promise<ReturnType> => {
     // Fetch the message to verify ownership
     const message = await db.chatMessage.findUnique({
       where: { id: messageId },
-      select: { senderId: true, recipientId: true },
+      select: { senderId: true, recipientId: true, fileId: true },
     });
 
     if (!message) {
@@ -28,6 +29,11 @@ const handler = async (data: InputType): Promise<ReturnType> => {
 
     if (message.senderId !== userId) {
       return { error: "You can only delete your own messages" };
+    }
+
+    // Delete the file from Google Drive if it exists
+    if (message.fileId) {
+      await deleteFromGoogleDrive(message.fileId);
     }
 
     // Delete the message

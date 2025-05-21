@@ -3,8 +3,7 @@
 import { auth } from "@clerk/nextjs";
 import { db } from "@/lib/db";
 import { pusherServer } from "@/lib/pusher";
-import path from "path";
-import fs from "fs/promises";
+import { uploadToGoogleDrive } from "@/lib/google-drive";
 
 export const sendMessageWithFile = async (formData: FormData) => {
   const { userId } = auth();
@@ -39,18 +38,16 @@ export const sendMessageWithFile = async (formData: FormData) => {
       return { error: "Sender not found" };
     }
 
-    let filePath: string | undefined;
+    let fileId: string | undefined;
     let originalFileName: string | undefined;
     let fileType: string | undefined;
 
     if (file) {
-      const uploadDir = path.join(process.cwd(), "public", "uploads", "chat");
-      await fs.mkdir(uploadDir, { recursive: true });
-      const fileName = `${Date.now()}-${file.name}`;
-      const filePathLocal = path.join(uploadDir, fileName);
       const arrayBuffer = await file.arrayBuffer();
-      await fs.writeFile(filePathLocal, new Uint8Array(arrayBuffer));
-      filePath = `/uploads/chat/${fileName}`;
+      const buffer = Buffer.from(arrayBuffer);
+      const fileName = `${Date.now()}-${file.name}`;
+      const mimeType = file.type;
+      fileId = await uploadToGoogleDrive(buffer, fileName, mimeType);
       originalFileName = file.name;
       fileType = file.type;
     }
@@ -60,7 +57,7 @@ export const sendMessageWithFile = async (formData: FormData) => {
         senderId: userId,
         recipientId,
         content: content || null,
-        filePath: filePath || null,
+        fileId: fileId || null,
         originalFileName: originalFileName || null,
         fileType: fileType || null,
         isRead: false,
@@ -72,7 +69,7 @@ export const sendMessageWithFile = async (formData: FormData) => {
       senderId: userId,
       senderName: sender.firstName,
       content: content || null,
-      filePath: filePath || null,
+      fileId: fileId || null,
       originalFileName: originalFileName || null,
       fileType: fileType || null,
       createdAt: message.createdAt.toISOString(),

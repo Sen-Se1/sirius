@@ -41,25 +41,20 @@ export default function ProfilePanel({
         minute: "2-digit",
       }).format(date);
     } catch (error) {
-      console.error("Error formatting date:", error);
       return "now";
     }
   };
 
   const fetchSharedFiles = async (retryCount = 3, delay = 1000) => {
     if (!selectedChatData.recipientId) {
-      console.warn("No recipientId provided, skipping fetch");
       return;
     }
 
     for (let attempt = 1; attempt <= retryCount; attempt++) {
       try {
-        console.log(`Fetching shared files, attempt ${attempt} for recipientId: ${selectedChatData.recipientId}`);
         const result = await getMessages({ recipientId: selectedChatData.recipientId });
-        console.log("getMessages result:", result);
 
         if (result.error) {
-          console.error(`Fetch attempt ${attempt} failed:`, result.error);
           if (attempt === retryCount) {
             setFetchError("Failed to load shared files after multiple attempts");
             return;
@@ -69,17 +64,14 @@ export default function ProfilePanel({
         }
 
         const messages = result.data?.messages || [];
-        console.log("Messages received:", messages);
-
-        const files = messages.filter((msg) => msg.filePath && msg.fileType);
-        console.log("Filtered files:", files);
+        const files = messages.filter((msg) => msg.fileId && msg.fileType);
 
         setSharedFiles(
           files.map((msg) => ({
             id: msg.id,
             senderId: msg.senderId,
             text: msg.content,
-            filePath: msg.filePath,
+            fileId: msg.fileId,
             originalFileName: msg.originalFileName,
             fileType: msg.fileType,
             time: msg.createdAt ? formatDate(msg.createdAt.toString()) : "now",
@@ -90,7 +82,6 @@ export default function ProfilePanel({
         setFetchError(null);
         return;
       } catch (error) {
-        console.error(`Unexpected error on attempt ${attempt}:`, error);
         if (attempt === retryCount) {
           setFetchError("Unexpected error loading shared files");
         }
@@ -109,7 +100,6 @@ export default function ProfilePanel({
     if (!userId || !selectedChatData.recipientId) return;
 
     const channel = pusherClient.subscribe(`user-${userId}`);
-    console.log(`Subscribed to Pusher channel: user-${userId}`);
 
     channel.bind(
       "new-message",
@@ -117,24 +107,17 @@ export default function ProfilePanel({
         messageId: string;
         senderId: string;
         content: string | null;
-        filePath: string | null;
+        fileId: string | null;
         originalFileName: string | null;
         fileType: string | null;
         createdAt: string;
       }) => {
-        console.log("Received Pusher new-message:", {
-          messageId: data.messageId,
-          senderId: data.senderId,
-          filePath: data.filePath,
-          fileType: data.fileType,
-          isSenderCurrentUser: data.senderId === userId,
-        });
-        if (data.filePath && data.fileType) {
+        if (data.fileId && data.fileType) {
           const newFile: UIMessage = {
             id: data.messageId,
             senderId: data.senderId,
             text: data.content,
-            filePath: data.filePath,
+            fileId: data.fileId,
             originalFileName: data.originalFileName,
             fileType: data.fileType,
             time: formatDate(data.createdAt),
@@ -142,11 +125,9 @@ export default function ProfilePanel({
             isRead: data.senderId === userId,
           };
           setSharedFiles((prev) => {
-            if (prev.some((file) => file.id === newFile.id && file.filePath === newFile.filePath)) {
-              console.log("Duplicate file ignored:", newFile.id);
+            if (prev.some((file) => file.id === newFile.id && file.fileId === newFile.fileId)) {
               return prev;
             }
-            console.log("Adding new file to sharedFiles:", newFile);
             return [...prev, newFile];
           });
         }
@@ -154,16 +135,10 @@ export default function ProfilePanel({
     );
 
     channel.bind("message-deleted", (data: { messageId: string }) => {
-      console.log("Received Pusher message-deleted:", { messageId: data.messageId });
-      setSharedFiles((prev) => {
-        const updatedFiles = prev.filter((file) => file.id !== data.messageId);
-        console.log("Updated shared files after deletion:", updatedFiles);
-        return updatedFiles;
-      });
+      setSharedFiles((prev) => prev.filter((file) => file.id !== data.messageId));
     });
 
     return () => {
-      console.log(`Unsubscribing from Pusher channel: user-${userId}`);
       pusherClient.unsubscribe(`user-${userId}`);
       pusherClient.unbind("new-message");
       pusherClient.unbind("message-deleted");
@@ -190,21 +165,22 @@ export default function ProfilePanel({
             </div>
             <h3 className="text-sm font-medium">{userName}</h3>
             <p className="text-xs text-gray-500">{selectedChatData.recipientEmail}</p>
-            <div
+            <button
               className="flex flex-col items-center gap-1 mt-2 p-2 rounded-lg cursor-pointer hover:bg-gray-100"
               onClick={() => {
                 setShowProfile(false);
                 setShowSearch(true);
               }}
+              aria-label="Open search"
             >
               <div className="bg-gray-500 rounded-full p-2">
                 <Search size={16} className="text-white" />
               </div>
               <span className="text-sm text-black">Search</span>
-            </div>
+            </button>
           </div>
         </div>
-  
+
         <div className="p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold">Shared files</h3>
@@ -226,15 +202,19 @@ export default function ProfilePanel({
                     {file.fileType?.startsWith("image/") ? (
                       <Button
                         variant="ghost"
-                        onClick={() => setSelectedImage(file.filePath!)}
+                        onClick={() =>
+                          setSelectedImage(`https://drive.google.com/uc?export=view&id=${file.fileId}`)
+                        }
                         className="flex items-center space-x-2"
+                        aria-label={`View ${file.originalFileName || "image"}`}
                       >
                         <Image
-                          src={file.filePath!}
+                          src={`https://drive.google.com/uc?export=view&id=${file.fileId}`}
                           alt={file.originalFileName || "Shared image"}
                           width={40}
                           height={40}
                           className="rounded object-cover"
+                          onError={() => setFetchError("Failed to load image")}
                         />
                         <span className="text-sm text-gray-700 truncate max-w-[150px]">
                           {file.originalFileName || "Image"}
@@ -242,9 +222,10 @@ export default function ProfilePanel({
                       </Button>
                     ) : (
                       <a
-                        href={file.filePath!}
+                        href={`https://drive.google.com/uc?export=download&id=${file.fileId}`}
                         download={file.originalFileName || "File"}
                         className="flex items-center space-x-2 text-blue-500 hover:underline"
+                        aria-label={`Download ${file.originalFileName || "file"}`}
                       >
                         <FileText size={20} className="text-gray-500" />
                         <span className="text-sm truncate max-w-[150px]">
@@ -259,7 +240,7 @@ export default function ProfilePanel({
           )}
         </div>
       </div>
-  
+
       {selectedImage && (
         <PreviewImage
           src={selectedImage}

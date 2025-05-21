@@ -121,7 +121,7 @@ const Conversation = ({
       id: msg.id,
       senderId: msg.senderId,
       text: msg.content,
-      filePath: msg.filePath,
+      fileId: msg.fileId,
       originalFileName: msg.originalFileName,
       fileType: msg.fileType,
       time: msg.createdAt ? formatDate(msg.createdAt) : "now",
@@ -143,7 +143,7 @@ const Conversation = ({
         messageId: string;
         senderId: string;
         content: string | null;
-        filePath: string | null;
+        fileId: string | null;
         originalFileName: string | null;
         fileType: string | null;
         createdAt: string;
@@ -153,7 +153,7 @@ const Conversation = ({
             id: data.messageId,
             senderId: data.senderId,
             text: data.content,
-            filePath: data.filePath,
+            fileId: data.fileId,
             originalFileName: data.originalFileName,
             fileType: data.fileType,
             time: formatDate(data.createdAt),
@@ -211,7 +211,7 @@ const Conversation = ({
         id: string;
         senderId: string;
         content: string | null;
-        filePath: string | null;
+        fileId: string | null;
         originalFileName: string | null;
         fileType: string | null;
         createdAt: string;
@@ -221,7 +221,7 @@ const Conversation = ({
           id: data.id,
           senderId: data.senderId,
           text: data.content,
-          filePath: data.filePath,
+          fileId: data.fileId,
           originalFileName: data.originalFileName,
           fileType: data.fileType,
           time: formatDate(data.createdAt),
@@ -299,7 +299,7 @@ const Conversation = ({
         id: tempId,
         senderId: userId,
         text: messageText || null,
-        filePath: selectedFile ? URL.createObjectURL(selectedFile) : undefined,
+        fileId: selectedFile ? URL.createObjectURL(selectedFile) : undefined,
         originalFileName: selectedFile ? selectedFile.name : undefined,
         fileType: selectedFile ? selectedFile.type : undefined,
         time: currentTime,
@@ -341,7 +341,7 @@ const Conversation = ({
               ? {
                   ...msg,
                   id: serverMessage?.id ?? tempId,
-                  filePath: serverMessage?.filePath ?? msg.filePath,
+                  fileId: serverMessage?.fileId ?? msg.fileId,
                   originalFileName:
                     serverMessage?.originalFileName ?? msg.originalFileName,
                   fileType: serverMessage?.fileType ?? msg.fileType,
@@ -567,26 +567,48 @@ const Conversation = ({
                           {msg.text}
                         </p>
                       )}
-                      {msg.filePath && msg.fileType && (
+                      {msg.fileId && msg.fileType && (
                         <div className="mx-[-9px] mt-2">
                           {msg.fileType.startsWith("image/") ? (
                             <Image
-                              src={msg.filePath}
+                              src={
+                                msg.isPending
+                                  ? msg.fileId
+                                  : `https://drive.google.com/uc?export=view&id=${msg.fileId}`
+                              }
                               alt={msg.originalFileName || "Attached image"}
                               width={490}
                               height={490}
                               className="rounded cursor-pointer max-w-full h-auto"
-                              onClick={() => setSelectedImage(msg.filePath!)}
+                              onClick={() => {
+                                if (msg.fileId) {
+                                  setSelectedImage(
+                                    msg.isPending
+                                      ? msg.fileId
+                                      : `https://drive.google.com/uc?export=view&id=${msg.fileId}`
+                                  );
+                                }
+                              }}
+                              onError={() =>
+                                console.error("Failed to load image")
+                              }
                             />
                           ) : (
                             <a
-                              href={msg.filePath}
+                              href={
+                                msg.isPending
+                                  ? msg.fileId
+                                  : `https://drive.google.com/uc?export=download&id=${msg.fileId}`
+                              }
                               download={msg.originalFileName}
                               className={`${
                                 msg.isFromCurrentUser
                                   ? "text-blue-100 hover:text-blue-200"
                                   : "text-blue-500 hover:text-blue-600"
                               } underline mx-[9px]`}
+                              aria-label={`Download ${
+                                msg.originalFileName || "file"
+                              }`}
                             >
                               {msg.originalFileName || "Download file"}
                             </a>
@@ -605,7 +627,7 @@ const Conversation = ({
                           <>
                             {msg.isPending && (
                               <span className="ml-2 text-blue-100">
-                                {msg.filePath ? "Uploading..." : "Sending..."}
+                                {msg.fileId ? "Uploading..." : "Sending..."}
                               </span>
                             )}
                             {!msg.isPending && msg.error && (

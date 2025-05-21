@@ -27,7 +27,7 @@ const handler = async (data: InputType): Promise<ReturnType> => {
         id: true,
         senderId: true,
         content: true,
-        filePath: true,
+        fileId: true,
         originalFileName: true,
         fileType: true,
         createdAt: true,

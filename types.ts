@@ -44,7 +44,7 @@ export interface UIMessage {
   id: string;
   senderId: string;
   text: string | null;
-  filePath?: string | null;
+  fileId?: string | null;
   originalFileName?: string | null;
   fileType?: string | null;
   time: string;
