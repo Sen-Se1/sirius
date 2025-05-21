@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getBoardIdFromCard } from "@/actions/get-board-id-from-card";
 import { markNotificationAsRead } from "@/actions/mark-notification-as-read";
+import { formatDistanceToNow } from "date-fns";
 import { useNotifications } from "@/components/providers/notification-provider";
 import { toast } from "sonner";
 import { Notification } from "@prisma/client";
@@ -59,7 +60,7 @@ const Notifications = () => {
         <Button
           variant="custom_ghost"
           size="icon"
-          className="relative h-8 w-8 rounded-full hover:bg-transparent bg-transparent"
+          className="relative h-9 w-9 rounded-full hover:bg-transparent bg-transparent"
           aria-label="Notifications"
         >
           <Bell className="h-5 w-5 text-current" />
@@ -70,7 +71,7 @@ const Notifications = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-96 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 p-1"
+        className="w-[640px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl p-2 max-h-[70vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600"
       >
         {notifications.length > 0 ? (
           notifications
@@ -79,17 +80,29 @@ const Notifications = () => {
               <DropdownMenuItem
                 key={notification.id}
                 onSelect={() => handleNotificationClick(notification)}
-                className={`px-3 py-2 text-sm ${
-                  notification.isRead
-                    ? "text-gray-500 dark:text-gray-400"
-                    : "text-gray-900 dark:text-gray-100"
-                } rounded-md focus:outline-none cursor-pointer transition-colors`}
+                className={`
+                  flex flex-col items-start px-4 py-3 mb-1 rounded-lg
+                  ${
+                    notification.isRead
+                      ? "bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                      : "bg-blue-50 dark:bg-blue-900/30 text-gray-900 dark:text-gray-100"
+                  }
+                  hover:bg-gray-100 dark:hover:bg-gray-600 focus:bg-gray-100 dark:focus:bg-gray-600
+                  transition-all duration-200 cursor-pointer
+                `}
               >
-                <span className="truncate">{notification.message}</span>
+                <span className="text-sm font-medium truncate w-full">
+                  {notification.message}
+                </span>
+                <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  {formatDistanceToNow(new Date(notification.createdAt), {
+                    addSuffix: true,
+                  })}
+                </span>
               </DropdownMenuItem>
             ))
         ) : (
-          <DropdownMenuItem className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 cursor-default select-none">
+          <DropdownMenuItem className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 cursor-default select-none">
             No notifications
           </DropdownMenuItem>
         )}
