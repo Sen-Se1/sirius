@@ -5,8 +5,8 @@
       "schedule": "0 0 * * *"
     },
     {
-      "path": "/api/cron/check-deadlines",
-      "schedule": "*/5 * * * * *"
+      "path": "/api/cron/interval-of-1-min",
+      "schedule": "* * * * *"
     }
   ]
 }
