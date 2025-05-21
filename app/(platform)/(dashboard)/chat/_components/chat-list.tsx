@@ -1,7 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Settings, User } from "lucide-react";
+import {
+  Search,
+  Settings,
+  User,
+  Bell,
+  Palette,
+  Lock,
+  HelpCircle,
+  Info,
+  Languages,
+  Database,
+} from "lucide-react";
 import Image from "next/image";
 import { User as UserType } from "@prisma/client";
 import { getAllUsers } from "@/actions/get-all-users";
@@ -22,6 +33,8 @@ interface ChatListProps {
   setSelectedChat: (chat: UIChat | null) => void;
   unreadCounts: UnreadCounts;
   setUnreadCounts: React.Dispatch<React.SetStateAction<UnreadCounts>>;
+  setSelectedSettingsPage: React.Dispatch<React.SetStateAction<string | null>>;
+  selectedSettingsPage: string | null;
 }
 
 export default function ChatList({
@@ -30,10 +43,22 @@ export default function ChatList({
   setSelectedChat,
   unreadCounts,
   setUnreadCounts,
+  setSelectedSettingsPage,
+  selectedSettingsPage,
 }: ChatListProps) {
   const [users, setUsers] = useState<UserType[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const { userId } = useAuth();
+const settingsOptions = [
+  { page: "language", icon: Languages, label: "Language" },
+  { page: "preferences", icon: Settings, label: "Preferences" },
+  { page: "data-management", icon: Database, label: "Data Management" },
+  { page: "notifications", icon: Bell, label: "Notifications" },
+  { page: "appearance", icon: Palette, label: "Appearance" },
+  { page: "privacy", icon: Lock, label: "Privacy" },
+  { page: "help-support", icon: HelpCircle, label: "Help & Support" },
+  { page: "about", icon: Info, label: "About" },
+];
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -70,7 +95,7 @@ export default function ChatList({
       pusherClient.unbind("new-message");
     };
   }, [userId, selectedChat, setUnreadCounts]);
-  
+
   const filteredUsers = users
     .filter((user) => user.id !== userId)
     .filter(
@@ -157,23 +182,23 @@ export default function ChatList({
         </div>
       ) : (
         <div className="p-4">
-          <div className="space-y-4">
-            <Button
-              variant="ghost"
-              className="w-full text-left justify-start hover:bg-gray-50"
-              aria-label="Profile"
-            >
-              <User size={20} className="text-gray-600 mr-3" />
-              Profile
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full text-left justify-start hover:bg-gray-50"
-              aria-label="Preferences"
-            >
-              <Settings size={20} className="text-gray-600 mr-3" />
-              Preferences
-            </Button>
+          <div className="space-y-2">
+            {settingsOptions.map(({ page, icon: Icon, label }) => (
+              <Button
+                key={page}
+                variant="ghost"
+                className={`w-full text-left justify-start hover:bg-gray-50 text-gray-700 ${
+                  selectedSettingsPage === page
+                    ? "bg-blue-100 text-blue-600"
+                    : ""
+                }`}
+                onClick={() => setSelectedSettingsPage(page)}
+                aria-label={label}
+              >
+                <Icon size={20} className="text-gray-600 mr-3" />
+                {label}
+              </Button>
+            ))}
           </div>
         </div>
       )}

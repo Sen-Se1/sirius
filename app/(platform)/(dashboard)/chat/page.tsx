@@ -9,20 +9,37 @@ import { UIChat, UIMessage } from "@/types";
 import ProfilePanel from "./_components/profile-panel";
 import SearchPanel from "./_components/search-panel";
 import { getUnreadCountsPerSender } from "@/actions/get-unread-counts-per-sender";
+import {
+  PreferencesPage,
+  NotificationsPage,
+  AppearancePage,
+  PrivacyPage,
+  HelpSupportPage,
+  AboutPage,
+  DataManagementPage,
+  LanguagePage,
+} from "./_components/settings";
 
 interface UnreadCounts {
   [senderId: string]: number;
 }
 
 export default function Chat() {
-  const [activeSection, setActiveSection] = useState<"messages" | "settings">("messages");
+  const [activeSection, setActiveSection] = useState<"messages" | "settings">(
+    "messages"
+  );
   const [selectedChat, setSelectedChat] = useState<UIChat | null>(null);
+  const [selectedSettingsPage, setSelectedSettingsPage] = useState<
+    string | null
+  >(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [unreadCounts, setUnreadCounts] = useState<UnreadCounts>({});
   const [realtimeMessages, setRealtimeMessages] = useState<UIMessage[]>([]);
   const [searchResults, setSearchResults] = useState<UIMessage[]>([]);
-  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     const fetchUnreadCounts = async () => {
@@ -39,14 +56,12 @@ export default function Chat() {
   };
 
   const handleSearchPerformed = (newSearchTerm: string) => {
-    // Clear highlight if a new search is performed (different search term)
     if (searchResults.length > 0 && newSearchTerm !== searchResults[0]?.text) {
       setHighlightedMessageId(null);
     }
   };
 
   const handleInputCleared = () => {
-    // Clear highlight when input is cleared
     setHighlightedMessageId(null);
   };
 
@@ -55,6 +70,8 @@ export default function Chat() {
       <Sidebar
         activeSection={activeSection}
         setActiveSection={setActiveSection}
+        setSelectedChat={setSelectedChat}
+        setSelectedSettingsPage={setSelectedSettingsPage}
       />
       <ChatList
         activeSection={activeSection}
@@ -62,9 +79,11 @@ export default function Chat() {
         setSelectedChat={setSelectedChat}
         unreadCounts={unreadCounts}
         setUnreadCounts={setUnreadCounts}
+        setSelectedSettingsPage={setSelectedSettingsPage}
+        selectedSettingsPage={selectedSettingsPage}
       />
       <div className="flex-1 bg-gray-50 h-[calc(100vh-64px)] mt-16 flex flex-col">
-        {selectedChat ? (
+        {activeSection === "messages" && selectedChat ? (
           <>
             <ChatHeader
               selectedChatData={selectedChat}
@@ -78,14 +97,18 @@ export default function Chat() {
                 selectedChat={selectedChat}
                 showProfile={showProfile}
                 setUnreadCounts={setUnreadCounts}
-                realtimeMessages={searchResults.length > 0 ? searchResults : undefined}
+                realtimeMessages={
+                  searchResults.length > 0 ? searchResults : undefined
+                }
                 setRealtimeMessages={setRealtimeMessages}
                 highlightedMessageId={highlightedMessageId}
                 setHighlightedMessageId={setHighlightedMessageId}
               />
               <div
                 className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                  showProfile || showSearch ? "w-full md:w-80 opacity-100" : "w-0 opacity-0"
+                  showProfile || showSearch
+                    ? "w-full md:w-80 opacity-100"
+                    : "w-0 opacity-0"
                 }`}
               >
                 {showSearch ? (
@@ -110,9 +133,26 @@ export default function Chat() {
               </div>
             </div>
           </>
+        ) : activeSection === "settings" && selectedSettingsPage ? (
+          <div className="h-full flex flex-col">
+            {selectedSettingsPage === "language" && <LanguagePage />}{" "}
+            {selectedSettingsPage === "preferences" && <PreferencesPage />}
+            {selectedSettingsPage === "data-management" && (
+              <DataManagementPage />
+            )}
+            {selectedSettingsPage === "notifications" && <NotificationsPage />}
+            {selectedSettingsPage === "appearance" && <AppearancePage />}
+            {selectedSettingsPage === "privacy" && <PrivacyPage />}
+            {selectedSettingsPage === "help-support" && <HelpSupportPage />}
+            {selectedSettingsPage === "about" && <AboutPage />}
+          </div>
         ) : (
           <div className="h-full flex items-center justify-center">
-            <p className="text-gray-500">Select a conversation to start</p>
+            <p className="text-gray-500">
+              {activeSection === "messages"
+                ? "Select a conversation to start"
+                : "Select a settings option"}
+            </p>
           </div>
         )}
       </div>
