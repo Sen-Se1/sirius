@@ -16,7 +16,41 @@ const handler = async (data: GetAllUsersInput): Promise<GetAllUsersReturn> => {
   }
 
   try {
-    const users = await db.user.findMany();
+    // Find all users who have sent messages to the current user
+    const senders = await db.chatMessage.findMany({
+      where: {
+        recipientId: userId,
+      },
+      select: {
+        sender: true,
+      },
+      distinct: ["senderId"],
+    });
+
+    // Find all users who have received messages from the current user
+    const recipients = await db.chatMessage.findMany({
+      where: {
+        senderId: userId,
+      },
+      select: {
+        recipient: true,
+      },
+      distinct: ["recipientId"],
+    });
+
+    // Combine sender and recipient IDs into a unique set
+    const userIds = new Set<string>();
+    senders.forEach((msg) => userIds.add(msg.sender.id));
+    recipients.forEach((msg) => userIds.add(msg.recipient.id));
+
+    // Fetch user details for the identified user IDs
+    const users = await db.user.findMany({
+      where: {
+        id: {
+          in: Array.from(userIds),
+        },
+      },
+    });
 
     return { data: users };
   } catch (error) {

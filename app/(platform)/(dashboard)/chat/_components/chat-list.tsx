@@ -16,6 +16,7 @@ import {
 import Image from "next/image";
 import { User as UserType } from "@prisma/client";
 import { getAllUsers } from "@/actions/get-all-users";
+import { searchUsers } from "@/actions/search-users";
 import { UIChat } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -49,21 +50,26 @@ export default function ChatList({
   const [users, setUsers] = useState<UserType[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const { userId } = useAuth();
-const settingsOptions = [
-  { page: "language", icon: Languages, label: "Language" },
-  { page: "preferences", icon: Settings, label: "Preferences" },
-  { page: "data-management", icon: Database, label: "Data Management" },
-  { page: "notifications", icon: Bell, label: "Notifications" },
-  { page: "appearance", icon: Palette, label: "Appearance" },
-  { page: "privacy", icon: Lock, label: "Privacy" },
-  { page: "help-support", icon: HelpCircle, label: "Help & Support" },
-  { page: "about", icon: Info, label: "About" },
-];
+  const settingsOptions = [
+    { page: "language", icon: Languages, label: "Language" },
+    { page: "preferences", icon: Settings, label: "Preferences" },
+    { page: "data-management", icon: Database, label: "Data Management" },
+    { page: "notifications", icon: Bell, label: "Notifications" },
+    { page: "appearance", icon: Palette, label: "Appearance" },
+    { page: "privacy", icon: Lock, label: "Privacy" },
+    { page: "help-support", icon: HelpCircle, label: "Help & Support" },
+    { page: "about", icon: Info, label: "About" },
+  ];
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const result = await getAllUsers({});
+        let result;
+        if (searchTerm.trim()) {
+          result = await searchUsers({ searchTerm });
+        } else {
+          result = await getAllUsers({});
+        }
         if (result.error) {
           console.error("Error fetching users:", result.error);
           return;
@@ -74,7 +80,7 @@ const settingsOptions = [
       }
     };
     fetchUsers();
-  }, []);
+  }, [searchTerm]);
 
   useEffect(() => {
     if (!userId) return;
@@ -95,15 +101,6 @@ const settingsOptions = [
       pusherClient.unbind("new-message");
     };
   }, [userId, selectedChat, setUnreadCounts]);
-
-  const filteredUsers = users
-    .filter((user) => user.id !== userId)
-    .filter(
-      (user) =>
-        user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
 
   return (
     <div className="w-80 bg-white border-r h-[calc(100vh-64px)] mt-16 flex flex-col">
@@ -131,54 +128,56 @@ const settingsOptions = [
       </div>
       {activeSection === "messages" ? (
         <div className="overflow-y-auto h-[calc(100vh-140px)]">
-          {filteredUsers.map((user) => (
-            <Card
-              key={user.id}
-              className={`border-b cursor-pointer hover:bg-gray-50 ${
-                selectedChat?.id === user.id ? "bg-blue-50" : ""
-              }`}
-              onClick={() => {
-                const chatData: UIChat = {
-                  id: user.id,
-                  recipientId: user.id,
-                  recipientFirstName: user.firstName,
-                  recipientLastName: user.lastName,
-                  recipientEmail: user.email,
-                  recipientPhoto: user.photo,
-                };
-                setSelectedChat(chatData);
-              }}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden">
-                    {user.photo ? (
-                      <Image
-                        src={user.photo}
-                        width={48}
-                        height={48}
-                        alt={`${user.firstName} ${user.lastName}`}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <User size={24} className="text-gray-600" />
+          {users
+            .filter((user) => user.id !== userId)
+            .map((user) => (
+              <Card
+                key={user.id}
+                className={`border-b cursor-pointer hover:bg-gray-50 ${
+                  selectedChat?.id === user.id ? "bg-blue-50" : ""
+                }`}
+                onClick={() => {
+                  const chatData: UIChat = {
+                    id: user.id,
+                    recipientId: user.id,
+                    recipientFirstName: user.firstName,
+                    recipientLastName: user.lastName,
+                    recipientEmail: user.email,
+                    recipientPhoto: user.photo,
+                  };
+                  setSelectedChat(chatData);
+                }}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden">
+                      {user.photo ? (
+                        <Image
+                          src={user.photo}
+                          width={48}
+                          height={48}
+                          alt={`${user.firstName} ${user.lastName}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User size={24} className="text-gray-600" />
+                      )}
+                    </div>
+                    <div className="ml-4 flex-1">
+                      <h3 className="font-medium">
+                        {user.firstName} {user.lastName}
+                      </h3>
+                      <p className="text-sm text-gray-600">{user.email}</p>
+                    </div>
+                    {unreadCounts[user.id] > 0 && (
+                      <div className="ml-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                        {unreadCounts[user.id]}
+                      </div>
                     )}
                   </div>
-                  <div className="ml-4 flex-1">
-                    <h3 className="font-medium">
-                      {user.firstName} {user.lastName}
-                    </h3>
-                    <p className="text-sm text-gray-600">{user.email}</p>
-                  </div>
-                  {unreadCounts[user.id] > 0 && (
-                    <div className="ml-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                      {unreadCounts[user.id]}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))}
         </div>
       ) : (
         <div className="p-4">
