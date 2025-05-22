@@ -4,12 +4,15 @@ import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { MobileSidebar } from "./mobile-sidebar";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import NavbarSearch from "./nav-search";
 import Notifications from "./notifications";
 import { computeAverageColor, getLuminance } from "@/lib/helper";
 import Favorites from "./favorites-dropdown";
 import { Messenger } from "./messenger";
+import { useAction } from "@/hooks/use-action";
+import { getBoardById } from "@/actions/get-board-by-id";
+import { toast } from "sonner";
 
 interface NavbarProps {
   favorites: {
@@ -25,32 +28,65 @@ export const Navbar = ({ favorites }: NavbarProps) => {
   const [bgColor, setBgColor] = useState<string>("white");
   const [textColor, setTextColor] = useState<string>("black");
   const pathname = usePathname();
+  const cache = useRef<Map<string, any>>(new Map());
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const { execute, data } = useAction(getBoardById, {
+    onSuccess: (data) => {
+      console.log("Fetched board:", data);
+      setBoard(data);
+      cache.current.set(data.id, data);
+    },
+    onError: (err) => {
+      console.error("Error fetching board:", err);
+      toast.error(err || "Failed to fetch board");
+      setBoard(null);
+      setBgColor("white");
+      setTextColor("black");
+    },
+  });
+
+  const debouncedExecute = useCallback(
+    (boardId: string) => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+      debounceTimeout.current = setTimeout(() => {
+        execute({ boardId });
+      }, 300);
+    },
+    [execute]
+  );
 
   useEffect(() => {
     const boardId = pathname.startsWith("/board/")
       ? pathname.split("/")[2]
       : null;
+
     if (boardId) {
-      fetch(`/api/boards/${boardId}`)
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error("Failed to fetch board");
-          }
-          return res.json();
-        })
-        .then((data) => setBoard(data))
-        .catch((err) => {
-          console.error(err);
-          setBoard(null);
-        });
+      // Check cache first
+      if (cache.current.has(boardId)) {
+        console.log("Using cached board data for ID:", boardId);
+        setBoard(cache.current.get(boardId));
+      } else {
+        debouncedExecute(boardId);
+      }
     } else {
       setBoard(null);
+      setBgColor("white");
+      setTextColor("black");
     }
-  }, [pathname]);
+
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
+  }, [pathname, debouncedExecute]);
 
   useEffect(() => {
-    if (board && board.imageFullUrl) {
-      computeAverageColor(board.imageFullUrl)
+    if (data && data.imageFullUrl) {
+      computeAverageColor(data.imageFullUrl)
         .then((color) => {
           setBgColor(color);
           const luminance = getLuminance(color);
@@ -65,7 +101,7 @@ export const Navbar = ({ favorites }: NavbarProps) => {
       setBgColor("white");
       setTextColor("black");
     }
-  }, [board]);
+  }, [data]);
 
   return (
     <nav

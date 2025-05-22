@@ -41,7 +41,7 @@ export const UnreadMessagePollingProvider = ({
       } catch (error) {
         console.error("Error during polling:", error);
       }
-    }, 1000);
+    }, 1000000);
 
     // Cleanup interval on unmount
     return () => {
