@@ -27,7 +27,10 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
     <UnreadMessagePollingProvider initialCount={initialUnreadCount}>
       <NotificationProvider initialNotifications={initialNotifications}>
         <div className="h-full flex flex-col">
-          <Navbar favorites={favoritesResult.data.favorites} />
+          <Navbar
+            favorites={favoritesResult.data.favorites}
+            orgNames={favoritesResult.data.orgNames}
+          />
           <div className="bg-gray-100 flex-1">{children}</div>
         </div>
       </NotificationProvider>

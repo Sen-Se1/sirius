@@ -19,11 +19,12 @@ interface NavbarProps {
     userId: string;
     boardId: string;
     createdAt: Date;
-    board: { title: string };
+    board: { title: string; orgId: string; imageThumbUrl?: string };
   }[];
+  orgNames: Record<string, string>;
 }
 
-export const Navbar = ({ favorites }: NavbarProps) => {
+export const Navbar = ({ favorites, orgNames }: NavbarProps) => {
   const [board, setBoard] = useState<any>(null);
   const [bgColor, setBgColor] = useState<string>("white");
   const [textColor, setTextColor] = useState<string>("black");
@@ -31,7 +32,7 @@ export const Navbar = ({ favorites }: NavbarProps) => {
   const cache = useRef<Map<string, any>>(new Map());
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  const { execute, data } = useAction(getBoardById, {
+  const { execute, data, error, isLoading } = useAction(getBoardById, {
     onSuccess: (data) => {
       console.log("Fetched board:", data);
       setBoard(data);
@@ -48,6 +49,7 @@ export const Navbar = ({ favorites }: NavbarProps) => {
 
   const debouncedExecute = useCallback(
     (boardId: string) => {
+      console.log("Debouncing execute for boardId:", boardId);
       if (debounceTimeout.current) {
         clearTimeout(debounceTimeout.current);
       }
@@ -59,54 +61,57 @@ export const Navbar = ({ favorites }: NavbarProps) => {
   );
 
   useEffect(() => {
-    const boardId = pathname.startsWith("/board/")
-      ? pathname.split("/")[2]
-      : null;
+    console.log("Pathname changed:", pathname);
+    const boardId = pathname.startsWith("/board/") ? pathname.split("/")[2] : null;
 
-    if (boardId) {
-      // Check cache first
-      if (cache.current.has(boardId)) {
-        console.log("Using cached board data for ID:", boardId);
-        setBoard(cache.current.get(boardId));
-      } else {
-        debouncedExecute(boardId);
-      }
-    } else {
+    const defaultBgColor = "#f8f9fa";
+    const defaultTextColor = "black";
+
+    if (!boardId) {
+      console.log("No boardId, setting default colors");
       setBoard(null);
-      setBgColor("white");
-      setTextColor("black");
+      setBgColor(defaultBgColor);
+      setTextColor(defaultTextColor);
+      cache.current.clear();
+      return;
     }
 
-    return () => {
-      if (debounceTimeout.current) {
-        clearTimeout(debounceTimeout.current);
-      }
-    };
+    if (cache.current.has(boardId)) {
+      console.log("Using cached board data for ID:", boardId);
+      setBoard(cache.current.get(boardId));
+    } else {
+      console.log("Fetching board for ID:", boardId);
+      debouncedExecute(boardId);
+    }
   }, [pathname, debouncedExecute]);
 
   useEffect(() => {
-    if (data && data.imageFullUrl) {
-      computeAverageColor(data.imageFullUrl)
-        .then((color) => {
-          setBgColor(color);
-          const luminance = getLuminance(color);
-          setTextColor(luminance > 0.5 ? "black" : "white");
-        })
-        .catch((err) => {
-          console.error("Failed to compute average color:", err);
-          setBgColor("white");
-          setTextColor("black");
-        });
-    } else {
-      setBgColor("white");
+    console.log("Board data updated:", board);
+    if (!board || !board.imageFullUrl) {
+      console.log("No board or imageFullUrl, setting default colors");
+      setBgColor("#f8f9fa");
       setTextColor("black");
+      return;
     }
-  }, [data]);
+
+    computeAverageColor(board.imageFullUrl)
+      .then((color) => {
+        console.log("Computed average color:", color);
+        setBgColor(color);
+        const luminance = getLuminance(color);
+        setTextColor(luminance > 0.5 ? "black" : "white");
+      })
+      .catch((err) => {
+        console.error("Failed to compute average color:", err);
+        setBgColor("#f8f9fa");
+        setTextColor("black");
+      });
+  }, [board]);
 
   return (
     <nav
       style={{ backgroundColor: bgColor, color: textColor }}
-      className="fixed z-50 top-0 px-4 w-full h-16 border-b shadow-sm flex items-center left-0 justify-between"
+      className="fixed z-50 top-0 px-4 w-full h-16 border-b shadow-sm flex items-center justify-between"
     >
       <MobileSidebar />
       <div className="flex items-center gap-x-4">
@@ -135,7 +140,13 @@ export const Navbar = ({ favorites }: NavbarProps) => {
             },
           }}
         />
-        <Favorites favorites={favorites} loading={false} />
+        <Favorites
+          favorites={favorites}
+          loading={isLoading}
+          bgColor={bgColor}
+          textColor={textColor}
+          orgNames={orgNames}
+        />
         <Messenger />
         <Notifications />
         <UserButton
