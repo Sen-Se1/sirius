@@ -17,14 +17,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Mail, User, MessageCircle } from "lucide-react";
-import { formContactSchema } from "@/lib/validationSchemas";
-import { useState } from "react";
+import { ContactUs } from "@/actions/contact-us/schema";
+import { submitContactForm } from "@/actions/contact-us";
+import { useAction } from "@/hooks/use-action";
 
 export default function ContactForm() {
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const form = useForm<z.infer<typeof formContactSchema>>({
-    resolver: zodResolver(formContactSchema),
+  const form = useForm<z.infer<typeof ContactUs>>({
+    resolver: zodResolver(ContactUs),
     defaultValues: {
       name: "",
       email: "",
@@ -32,35 +31,18 @@ export default function ContactForm() {
     },
   });
 
-
-  const onSubmit = async (data: z.infer<typeof formContactSchema>) => {
-    setIsLoading(true);
-
-    try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to send message");
-      }
-      
-      toast.success(`Thank you, ${data.name}! We will contact you soon.`);
+  const { execute, isLoading } = useAction(submitContactForm, {
+    onSuccess: (data) => {
+      toast.success(data.message);
       form.reset();
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      toast.error(error instanceof Error
-        ? error.message
-        : "Failed to send message. Please try again later.");
-    } finally {
-      setIsLoading(false);
-    }
+    },
+    onError: (error) => {
+      toast.error(error);
+    },
+  });
+
+  const onSubmit = (data: z.infer<typeof ContactUs>) => {
+    execute(data);
   };
 
   return (
@@ -70,7 +52,7 @@ export default function ContactForm() {
         className="space-y-6 w-full max-w-md"
       >
         <h1 className="text-xl font-semibold text-center mb-1 tracking-wide text-gray-900 dark:text-white">
-        Contact Us
+          Contact Us
         </h1>
 
         {/* Name Field */}
