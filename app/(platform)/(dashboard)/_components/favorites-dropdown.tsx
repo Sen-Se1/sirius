@@ -25,9 +25,9 @@ interface FavoriteWithBoard {
 interface FavoritesProps {
   favorites: FavoriteWithBoard[];
   loading: boolean;
-  bgColor: string; // Added to match NavbarSearch
-  textColor: string; // Added to match NavbarSearch
-  orgNames: Record<string, string>; // Organization names for display
+  bgColor: string;
+  textColor: string;
+  orgNames: Record<string, string>;
 }
 
 export const Favorites = ({ favorites, loading, bgColor, textColor, orgNames }: FavoritesProps) => {
