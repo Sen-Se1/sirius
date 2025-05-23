@@ -56,11 +56,11 @@ export const Favorites = ({ favorites, loading, bgColor, textColor, orgNames }: 
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-96 max-h-96 overflow-y-auto z-[1000] rounded-xl shadow-2xl border border-gray-200 bg-opacity-95 transition-all duration-200 ease-in-out transform animate-fadeIn dark:border-gray-700"
+        className="w-96 max-h-96 overflow-y-auto z-[1000] rounded-xl shadow-2xl border border-gray-200 bg-opacity-95 transition-all duration-200 ease-in-out transform animate-fadeIn dark:border-gray-700 text-left"
         style={{ backgroundColor: dropdownBgColor, color: textColor }}
       >
         {loading ? (
-          <DropdownMenuItem className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-3 cursor-default select-none">
+          <DropdownMenuItem className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 flex items-start gap-3 cursor-default select-none text-left">
             <svg
               className="animate-spin h-5 w-5"
               xmlns="http://www.w3.org/2000/svg"
@@ -86,7 +86,7 @@ export const Favorites = ({ favorites, loading, bgColor, textColor, orgNames }: 
         ) : favorites.length > 0 ? (
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
             <div className="px-4 py-3">
-              <div className="flex items-center gap-2 text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-4">
+              <div className="flex items-start gap-2 text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-4 text-left">
                 <Star className="h-4 w-4" />
                 Favorite Boards
               </div>
@@ -98,28 +98,31 @@ export const Favorites = ({ favorites, loading, bgColor, textColor, orgNames }: 
                 >
                   <Link
                     href={`/board/${favorite.boardId}`}
-                    className="group flex flex-col gap-1 px-3 py-3 text-sm rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-all duration-150 ease-in-out hover:scale-[1.02] focus:outline-none focus:ring-2 w-full"
+                    className="flex flex-col gap-1 pl-2 py-3 text-sm rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-all duration-150 ease-in-out hover:scale-[1.02] focus:outline-none focus:ring-2 w-full items-start text-left my-2"
                     aria-label={`Go to favorite board: ${favorite.board.title} in ${orgNames[favorite.board.orgId] || "Unknown Organization"}`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-start gap-3 w-full">
                       {favorite.board.imageThumbUrl ? (
                         <Image
                           src={favorite.board.imageThumbUrl}
-                          width={16}
-                          height={16}
+                          width={20}
+                          height={20}
                           alt=""
                           className="h-4 w-4 rounded-sm object-cover"
                         />
                       ) : (
-                        <Layout className="h-4 w-4 text-gray-400 dark:text-gray-500 group-hover:text-blue-500 dark:group-hover:text-blue-400" />
+                        <Layout className="h-4 w-4 text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400" />
                       )}
-                      <span className="font-medium truncate">{favorite.board.title}</span>
+                      <span className="font-medium break-words text-left w-full">{favorite.board.title}</span>
                     </div>
-                    <div className="ml-7 text-xs text-gray-500 dark:text-gray-400 truncate">
-                      Organization: {orgNames[favorite.board.orgId] || "Unknown Organization"}
-                    </div>
-                    <div className="ml-7 text-xs text-gray-400 dark:text-gray-500">
-                      Created: {formatDate(new Date(favorite.createdAt))}
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-gray-500 dark:text-gray-400 break-words">
+                        Organization: {orgNames[favorite.board.orgId] || "Unknown Organization"}
+                      </span>
+                      <span className="text-gray-400 dark:text-gray-500">·</span>
+                      <span className="text-gray-400 dark:text-gray-500 break-words">
+                        Created: {formatDate(new Date(favorite.createdAt))}
+                      </span>
                     </div>
                   </Link>
                 </DropdownMenuItem>
@@ -127,7 +130,7 @@ export const Favorites = ({ favorites, loading, bgColor, textColor, orgNames }: 
             </div>
           </div>
         ) : (
-          <DropdownMenuItem className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 cursor-default select-none">
+          <DropdownMenuItem className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 cursor-default select-none text-left">
             No favorite boards
           </DropdownMenuItem>
         )}

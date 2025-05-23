@@ -148,7 +148,7 @@ export const Navbar = ({ favorites, orgNames }: NavbarProps) => {
           orgNames={orgNames}
         />
         <Messenger />
-        <Notifications />
+        <Notifications bgColor={bgColor} textColor={textColor} />
         <UserButton
           afterSignOutUrl="/"
           appearance={{
