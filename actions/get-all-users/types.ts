@@ -3,5 +3,5 @@ import { User } from "@prisma/client";
 import { ActionState } from "@/lib/create-safe-action";
 import { GetAllUsers } from "./schema";
 
-export type GetAllUsersInput = z.infer<typeof GetAllUsers>;
-export type GetAllUsersReturn = ActionState<GetAllUsersInput, User[]>;
+export type InputType = z.infer<typeof GetAllUsers>;
+export type ReturnType = ActionState<InputType, User[]>;

@@ -4,9 +4,9 @@ import { auth } from "@clerk/nextjs";
 import { db } from "@/lib/db";
 import { createSafeAction } from "@/lib/create-safe-action";
 import { GetAllUsers } from "./schema";
-import { GetAllUsersInput, GetAllUsersReturn } from "./types";
+import { InputType, ReturnType } from "./types";
 
-const handler = async (data: GetAllUsersInput): Promise<GetAllUsersReturn> => {
+const handler = async (data: InputType): Promise<ReturnType> => {
   const { userId } = auth();
 
   if (!userId) {
