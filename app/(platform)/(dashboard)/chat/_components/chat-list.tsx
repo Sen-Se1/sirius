@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import {
   Search,
@@ -102,6 +100,19 @@ export default function ChatList({
     };
   }, [userId, selectedChat, setUnreadCounts]);
 
+  const handleUserClick = (user: UserType) => {
+    const chatData: UIChat = {
+      id: user.id,
+      recipientId: user.id,
+      recipientFirstName: user.firstName,
+      recipientLastName: user.lastName,
+      recipientEmail: user.email,
+      recipientPhoto: user.photo,
+    };
+    setSelectedChat(chatData);
+    setSearchTerm(""); // Clear the search input after selecting the user
+  };
+
   return (
     <div className="w-80 bg-white border-r h-[calc(100vh-64px)] mt-16 flex flex-col">
       <div className="p-4 border-b">
@@ -136,17 +147,7 @@ export default function ChatList({
                 className={`border-b cursor-pointer hover:bg-gray-50 ${
                   selectedChat?.id === user.id ? "bg-blue-50" : ""
                 }`}
-                onClick={() => {
-                  const chatData: UIChat = {
-                    id: user.id,
-                    recipientId: user.id,
-                    recipientFirstName: user.firstName,
-                    recipientLastName: user.lastName,
-                    recipientEmail: user.email,
-                    recipientPhoto: user.photo,
-                  };
-                  setSelectedChat(chatData);
-                }}
+                onClick={() => handleUserClick(user)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center">
