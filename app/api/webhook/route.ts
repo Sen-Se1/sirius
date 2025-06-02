@@ -64,7 +64,7 @@ export async function POST(req: Request) {
   }
 
   // Handle subscription cancellation (user cancels subscription)
-  if (event.type === "customer.subscription.deleted") {
+  if (event.type === "customer.subscription.updated") {
     const subscription = event.data.object as Stripe.Subscription;
 
     try {
