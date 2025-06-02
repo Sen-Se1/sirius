@@ -63,5 +63,53 @@ export async function POST(req: Request) {
     });
   }
 
+    // Handle subscription cancellation (user cancels subscription)
+  if (event.type === "customer.subscription.deleted") {
+    const subscription = event.data.object as Stripe.Subscription;
+
+    try {
+      // Mark subscription as canceled in the database
+      await db.orgSubscription.update({
+        where: {
+          stripeSubscriptionId: subscription.id,
+        },
+        data: {
+          stripeCurrentPeriodEnd: new Date(subscription.canceled_at! * 1000),
+        },
+      });
+      console.log(`Subscription ${subscription.id} has been canceled.`);
+    } catch (error) {
+      console.error("Error processing subscription cancellation:", error);
+      return new NextResponse("Error processing subscription cancellation", { status: 500 });
+    }
+  }
+
+    // Handle subscription expiration or failed payments
+  if (event.type === "invoice.payment_failed" || event.type === "customer.subscription.updated") {
+    const subscription = event.data.object as Stripe.Subscription;
+
+    // If the subscription is past due, it has expired
+    const currentDate = new Date();
+    const expirationDate = new Date(subscription.current_period_end * 1000);
+
+    if (expirationDate < currentDate) {
+      try {
+        // Update the subscription's expiration status
+        await db.orgSubscription.update({
+          where: {
+            stripeSubscriptionId: subscription.id,
+          },
+          data: {
+            stripeCurrentPeriodEnd: expirationDate,
+          },
+        });
+        console.log(`Subscription ${subscription.id} has expired.`);
+      } catch (error) {
+        console.error("Error processing expired subscription:", error);
+        return new NextResponse("Error processing expired subscription", { status: 500 });
+      }
+    }
+  }
+
   return new NextResponse(null, { status: 200 });
 }
