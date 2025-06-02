@@ -65,63 +65,81 @@ export async function POST(req: Request) {
     });
   }
 
-  // Handle subscription update (e.g., user cancels subscription or sets it to cancel at period end)
   if (event.type === "customer.subscription.updated") {
     const subscription = event.data.object as Stripe.Subscription;
 
     try {
-      // Check if the subscription is set to cancel at the end of the period
       const cancelAtPeriodEnd = subscription.cancel_at_period_end;
       const cancelAt = cancelAtPeriodEnd
-        ? new Date(subscription.cancel_at! * 1000) // Set cancellation date if cancellation is scheduled
+        ? new Date(subscription.cancel_at! * 1000)
         : null;
 
-      // Update the subscription details in the database
       await db.orgSubscription.update({
         where: {
           stripeSubscriptionId: subscription.id,
         },
         data: {
-          stripeCanceledAt: cancelAt, // Set or clear the cancel_at field
-          stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+          stripeCanceledAt: cancelAt,
+          stripeCurrentPeriodEnd: new Date(
+            subscription.current_period_end * 1000
+          ),
         },
       });
 
       if (cancelAtPeriodEnd) {
-        console.log(`Subscription ${subscription.id} is set to cancel at ${cancelAt}`);
+        console.log(
+          `Subscription ${subscription.id} is set to cancel at ${cancelAt}`
+        );
       } else {
         console.log(`Subscription ${subscription.id} is active`);
       }
-    } catch (error) {
-      console.error("Error updating subscription cancellation status:", error);
-      return new NextResponse("Error processing subscription cancellation", { status: 500 });
-    }
-  }
 
-  // Handle subscription expiration or failed payments
-  if (event.type === "invoice.payment_failed" || event.type === "customer.subscription.updated") {
-    const subscription = event.data.object as Stripe.Subscription;
-
-    // If the subscription is past due, it has expired
-    const currentDate = new Date();
-    const expirationDate = new Date(subscription.current_period_end * 1000);
-
-    if (expirationDate < currentDate) {
-      try {
-        // Update the subscription's expiration status
+      if (subscription.status === "past_due") {
+        console.log(`Subscription ${subscription.id} is expired.`);
         await db.orgSubscription.update({
           where: {
             stripeSubscriptionId: subscription.id,
           },
           data: {
-            stripeCurrentPeriodEnd: expirationDate,
+            stripeCanceledAt: new Date(),
+            stripeCurrentPeriodEnd: new Date(
+              subscription.current_period_end * 1000
+            ),
           },
         });
-        console.log(`Subscription ${subscription.id} has expired.`);
-      } catch (error) {
-        console.error("Error processing expired subscription:", error);
-        return new NextResponse("Error processing expired subscription", { status: 500 });
       }
+    } catch (error) {
+      console.error("Error updating subscription cancellation status:", error);
+      return new NextResponse("Error processing subscription cancellation", {
+        status: 500,
+      });
+    }
+  }
+
+  if (event.type === "invoice.payment_failed") {
+    const subscription = event.data.object as unknown as Stripe.Subscription;
+
+    try {
+      await db.orgSubscription.update({
+        where: {
+          stripeSubscriptionId: subscription.id,
+        },
+        data: {
+          stripeCanceledAt: new Date(),
+          stripeCurrentPeriodEnd: new Date(
+            subscription.current_period_end * 1000
+          ),
+        },
+      });
+
+      console.log(
+        `Subscription ${subscription.id} has expired due to payment failure.`
+      );
+    } catch (error) {
+      console.error("Error handling subscription expiration:", error);
+      return new NextResponse("Error processing subscription expiration", {
+        status: 500,
+      });
     }
   }
 

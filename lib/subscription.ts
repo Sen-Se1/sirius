@@ -28,10 +28,8 @@ export const checkSubscription = async () => {
     return false;
   }
 
-  // Check if subscription is canceled
   const isCanceled = orgSubscription.stripeCanceledAt !== null;
 
-  // If canceled, it's no longer valid, regardless of the current period end
   if (isCanceled) {
     return false;
   }
