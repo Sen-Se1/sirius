@@ -15,8 +15,8 @@ export const sendEmail = async (options: EmailPayload) => {
       tls: {
         rejectUnauthorized: false,
       },
-      logger: false,
-      debug: false,
+      logger: true,
+      debug: true,
     } as nodemailer.TransportOptions);
 
     const mailOpts: Mail.Options = {
