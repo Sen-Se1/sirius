@@ -63,28 +63,25 @@ export async function POST(req: Request) {
     });
   }
 
-    // Handle subscription cancellation (user cancels subscription)
+  // Handle subscription cancellation (user cancels subscription)
   if (event.type === "customer.subscription.deleted") {
     const subscription = event.data.object as Stripe.Subscription;
 
     try {
-      // Mark subscription as canceled in the database
-      await db.orgSubscription.update({
+      // Delete the subscription from the database instead of updating it
+      await db.orgSubscription.delete({
         where: {
           stripeSubscriptionId: subscription.id,
         },
-        data: {
-          stripeCurrentPeriodEnd: new Date(subscription.canceled_at! * 1000),
-        },
       });
-      console.log(`Subscription ${subscription.id} has been canceled.`);
+      console.log(`Subscription ${subscription.id} has been deleted from the database.`);
     } catch (error) {
       console.error("Error processing subscription cancellation:", error);
       return new NextResponse("Error processing subscription cancellation", { status: 500 });
     }
   }
 
-    // Handle subscription expiration or failed payments
+  // Handle subscription expiration or failed payments
   if (event.type === "invoice.payment_failed" || event.type === "customer.subscription.updated") {
     const subscription = event.data.object as Stripe.Subscription;
 
