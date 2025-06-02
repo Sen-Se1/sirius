@@ -41,6 +41,7 @@ export async function POST(req: Request) {
         stripeCurrentPeriodEnd: new Date(
           subscription.current_period_end * 1000
         ),
+        stripeCanceledAt: null,
       },
     });
   }
@@ -59,24 +60,40 @@ export async function POST(req: Request) {
         stripeCurrentPeriodEnd: new Date(
           subscription.current_period_end * 1000
         ),
+        stripeCanceledAt: null,
       },
     });
   }
 
-  // Handle subscription cancellation (user cancels subscription)
+  // Handle subscription update (e.g., user cancels subscription or sets it to cancel at period end)
   if (event.type === "customer.subscription.updated") {
     const subscription = event.data.object as Stripe.Subscription;
 
     try {
-      // Delete the subscription from the database instead of updating it
-      await db.orgSubscription.delete({
+      // Check if the subscription is set to cancel at the end of the period
+      const cancelAtPeriodEnd = subscription.cancel_at_period_end;
+      const cancelAt = cancelAtPeriodEnd
+        ? new Date(subscription.cancel_at! * 1000) // Set cancellation date if cancellation is scheduled
+        : null;
+
+      // Update the subscription details in the database
+      await db.orgSubscription.update({
         where: {
           stripeSubscriptionId: subscription.id,
         },
+        data: {
+          stripeCanceledAt: cancelAt, // Set or clear the cancel_at field
+          stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        },
       });
-      console.log(`Subscription ${subscription.id} has been deleted from the database.`);
+
+      if (cancelAtPeriodEnd) {
+        console.log(`Subscription ${subscription.id} is set to cancel at ${cancelAt}`);
+      } else {
+        console.log(`Subscription ${subscription.id} is active`);
+      }
     } catch (error) {
-      console.error("Error processing subscription cancellation:", error);
+      console.error("Error updating subscription cancellation status:", error);
       return new NextResponse("Error processing subscription cancellation", { status: 500 });
     }
   }
