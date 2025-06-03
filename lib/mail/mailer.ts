@@ -4,10 +4,12 @@ import Mail from "nodemailer/lib/mailer";
 
 export const sendEmail = async (options: EmailPayload) => {
   try {
+    const isSecure = Number(process.env.EMAIL_PORT) === 465;
+
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST as string,
       port: Number(process.env.EMAIL_PORT) || 587,
-      secure: process.env.NODE_ENV !== "production",
+      secure: isSecure,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
